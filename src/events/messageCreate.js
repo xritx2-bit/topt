@@ -1,3 +1,10 @@
+const {
+  ChannelType,
+  PermissionsBitField,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
+} = require('discord.js');
 const config = require('../config');
 const db = require('../database/db');
 const modmailDb = require('../database/modmailDb');
@@ -19,19 +26,28 @@ module.exports = {
     }
 
     // ==========================================
-    // 2. Honeypot Trap Check
+    // 2. Staff Natural Chat in Active ModMail Ticket Channels
+    // ==========================================
+    const activeTicket = modmailDb.getTicketByChannel(message.channel.id);
+    if (activeTicket) {
+      await handleStaffTicketMessage(message, activeTicket, client);
+      return;
+    }
+
+    // ==========================================
+    // 3. Honeypot Trap Check
     // ==========================================
     const isHoneypot = await checkHoneypot(message);
     if (isHoneypot) return;
 
     // ==========================================
-    // 3. AutoMod Rule Enforcement
+    // 4. AutoMod Rule Enforcement
     // ==========================================
     const autoModResult = await checkMessage(message);
     if (autoModResult.blocked) return;
 
     // ==========================================
-    // 4. Fast OwO-Style Prefix Commands (topt <cmd> / t <cmd>)
+    // 5. Fast OwO-Style Prefix Commands (topt <cmd> / t <cmd>)
     // ==========================================
     const content = message.content.trim();
     const primaryPrefix = config.prefix.toLowerCase();
@@ -66,113 +82,252 @@ module.exports = {
   }
 };
 
-// Handle incoming user DM for ModMail
+// ==========================================
+// User DM Ingestion (Abyss-style ModMail)
+// ==========================================
 async function handleDirectMessage(message, client) {
-  const userId = message.author.id;
-  let activeTicket = modmailDb.getActiveTicketByUser(userId);
+  const user = message.author;
+  let activeTicket = modmailDb.getActiveTicketByUser(user.id);
 
+  // Existing active ticket: Forward user message into the dedicated ticket channel
   if (activeTicket) {
-    // Forward message to existing ticket thread
     try {
-      const channel = await client.channels.fetch(activeTicket.channelId).catch(() => null);
-      if (channel) {
-        const thread = await channel.threads.fetch(activeTicket.threadId).catch(() => null);
-        if (thread) {
-          const attachments = message.attachments.map(a => a.url).join('\n');
-          const embed = infoEmbed(
-            `Message from ${message.author.username}`,
-            message.content + (attachments ? `\n\n**Attachments**:\n${attachments}` : '')
-          ).setThumbnail(message.author.displayAvatarURL());
+      const ticketChannel = await client.channels.fetch(activeTicket.channelId).catch(() => null);
+      if (ticketChannel) {
+        const attachments = message.attachments.map(a => a.url).join('\n');
+        const contentText = message.content || '*[Image / Attachment]*';
 
-          await thread.send({ embeds: [embed] });
-          await message.react('📨').catch(() => {});
-          return;
-        }
+        const embed = infoEmbed(
+          `Message from ${user.username}`,
+          contentText + (attachments ? `\n\n**Attachments**:\n${attachments}` : '')
+        )
+          .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+          .setFooter({ text: `User ID: ${user.id}` });
+
+        await ticketChannel.send({ embeds: [embed] });
+        modmailDb.addTranscriptMessage(activeTicket.ticketId, {
+          author: user.tag,
+          content: contentText + (attachments ? ` (Attachment: ${attachments})` : ''),
+          isStaff: false
+        });
+
+        await message.react('📨').catch(() => {});
+        return;
       }
     } catch (err) {
       console.error('[ModMail Forward Error]', err);
     }
   }
 
-  // Open a new ticket thread in the guild's modmail channel
-  // Find a guild where modmail is configured
+  // Open a brand new ticket in a dedicated private channel under the ModMail category
   let targetGuild = null;
-  let modmailChannelId = null;
-
-  for (const guild of client.guilds.cache.values()) {
-    const settings = db.settings[guild.id];
-    if (settings && settings.modmailChannelId) {
-      targetGuild = guild;
-      modmailChannelId = settings.modmailChannelId;
+  for (const g of client.guilds.cache.values()) {
+    const s = db.settings[g.id];
+    if (s && s.modmailCategoryId) {
+      targetGuild = g;
       break;
     }
   }
 
-  // Fallback to first guild if not explicitly configured
   if (!targetGuild) {
     targetGuild = client.guilds.cache.first();
   }
 
   if (!targetGuild) {
-    await message.reply({
-      content: '❌ Bot is not currently active in any server to route support.'
-    });
-    return;
-  }
-
-  const staffChannel = targetGuild.channels.cache.get(modmailChannelId) || targetGuild.systemChannel;
-  if (!staffChannel) {
-    await message.reply({
-      content: '❌ Staff have not set up a support ticket channel yet. Please contact an admin directly.'
-    });
+    await message.reply({ content: '❌ Bot is not currently active in any server.' });
     return;
   }
 
   try {
-    const ticketId = `ticket_${Date.now()}`;
+    const settings = db.settings[targetGuild.id] || {};
+    let category = null;
 
-    // Create private or public thread in staff channel
-    const thread = await staffChannel.threads.create({
-      name: `ticket-${message.author.username}`,
-      autoArchiveDuration: 1440,
-      reason: `ModMail support ticket from ${message.author.tag}`
+    // Find configured or existing category
+    if (settings.modmailCategoryId) {
+      category = targetGuild.channels.cache.get(settings.modmailCategoryId);
+    }
+
+    if (!category) {
+      category = targetGuild.channels.cache.find(
+        c => c.type === ChannelType.GuildCategory && c.name.toLowerCase().includes('modmail')
+      );
+    }
+
+    // Auto-create private ModMail category if missing
+    if (!category) {
+      category = await targetGuild.channels.create({
+        name: '📂 Modmail Tickets',
+        type: ChannelType.GuildCategory,
+        permissionOverwrites: [
+          {
+            id: targetGuild.roles.everyone.id,
+            deny: [PermissionsBitField.Flags.ViewChannel]
+          },
+          {
+            id: targetGuild.members.me.id,
+            allow: [
+              PermissionsBitField.Flags.ViewChannel,
+              PermissionsBitField.Flags.SendMessages,
+              PermissionsBitField.Flags.ManageChannels,
+              PermissionsBitField.Flags.EmbedLinks,
+              PermissionsBitField.Flags.AttachFiles
+            ]
+          }
+        ],
+        reason: 'Auto-creating ModMail Private Category'
+      });
+
+      if (!db.settings[targetGuild.id]) db.settings[targetGuild.id] = {};
+      db.settings[targetGuild.id].modmailCategoryId = category.id;
+      db.save('settings');
+    }
+
+    // Clean username for channel naming (Discord requires lowercase alphanumeric + dashes)
+    const cleanName = user.username.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 15) || 'user';
+    const channelName = `ticket-${cleanName}`;
+
+    // Create private ticket channel strictly inside the category
+    const ticketChannel = await targetGuild.channels.create({
+      name: channelName,
+      type: ChannelType.GuildText,
+      parent: category.id,
+      topic: `ModMail Ticket for ${user.tag} (ID: ${user.id}) | Staff: Type normally to reply`,
+      permissionOverwrites: [
+        {
+          id: targetGuild.roles.everyone.id,
+          deny: [PermissionsBitField.Flags.ViewChannel]
+        },
+        {
+          id: targetGuild.members.me.id,
+          allow: [
+            PermissionsBitField.Flags.ViewChannel,
+            PermissionsBitField.Flags.SendMessages,
+            PermissionsBitField.Flags.ManageChannels,
+            PermissionsBitField.Flags.EmbedLinks,
+            PermissionsBitField.Flags.AttachFiles
+          ]
+        }
+      ],
+      reason: `Support Ticket opened by ${user.tag}`
     });
 
+    const ticketId = `ticket_${Date.now()}`;
     modmailDb.createTicket({
       ticketId,
-      userId,
+      userId: user.id,
       guildId: targetGuild.id,
-      channelId: staffChannel.id,
-      threadId: thread.id
+      channelId: ticketChannel.id,
+      categoryId: category.id
     });
 
-    // Send initial thread header
-    const initialEmbed = infoEmbed(
-      `New Support Ticket • ${message.author.tag}`,
-      `A new support inquiry was opened via Direct Message.\n\n` +
-      `👤 **User**: ${message.author.tag} (<@${message.author.id}>)\n` +
-      `🆔 **User ID**: \`${message.author.id}\`\n` +
-      `💬 **Message**: "${message.content}"\n\n` +
-      `*Staff can reply to this user with \`/reply <message>\` or close with \`/close [reason]\`.*`
-    ).setThumbnail(message.author.displayAvatarURL());
+    // Action buttons for staff in the ticket channel
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`mm_close_${ticketId}`)
+        .setLabel('Close Ticket')
+        .setEmoji('🔒')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId(`mm_anon_${ticketId}`)
+        .setLabel('Toggle Anonymous')
+        .setEmoji('🕵️')
+        .setStyle(ButtonStyle.Secondary)
+    );
 
-    await thread.send({ embeds: [initialEmbed] });
+    // Initial Header Embed inside the ticket channel
+    const headerEmbed = infoEmbed(
+      `Support Inquiry • ${user.tag}`,
+      `A new support ticket has been opened via Direct Message.\n\n` +
+      `👤 **Member**: ${user.tag} (<@${user.id}>)\n` +
+      `🆔 **User ID**: \`${user.id}\`\n` +
+      `📅 **Registered**: <t:${Math.floor(user.createdTimestamp / 1000)}:R>\n\n` +
+      `💬 **Initial Message**:\n> "${message.content || '*[Attachment/Image]*'}"\n\n` +
+      `💡 **Staff Instructions (Abyss Style)**:\n` +
+      `• Type normally in this channel to send a reply to the member's DM.\n` +
+      `• Prefix your message with \`=\` or \`//\` to leave an internal staff note without sending to the member.\n` +
+      `• Click the **Close Ticket** button below or use \`/close\` when resolved.`
+    ).setThumbnail(user.displayAvatarURL({ dynamic: true }));
 
-    // Confirm to user in DM
+    await ticketChannel.send({ embeds: [headerEmbed], components: [row] });
+
+    // Forward any initial attachments
+    if (message.attachments.size > 0) {
+      const attachments = message.attachments.map(a => a.url).join('\n');
+      await ticketChannel.send({ content: `📁 **Initial Attachments**:\n${attachments}` });
+    }
+
+    // Save to transcript
+    modmailDb.addTranscriptMessage(ticketId, {
+      author: user.tag,
+      content: message.content,
+      isStaff: false
+    });
+
+    // Send confirmation to user in DM
     await message.reply({
       embeds: [
         successEmbed(
           'Support Ticket Opened',
-          `Your message has been received by the staff team in **${targetGuild.name}**!\n` +
+          `Your message has been delivered to the staff team at **${targetGuild.name}**!\n` +
           `A moderator will review your inquiry and reply to you directly in this DM.\n\n` +
-          `📋 **Ticket Reference**: \`${ticketId}\``
+          `📋 **Ticket Reference**: \`${ticketId}\`\n` +
+          `🔒 *All messages sent in this DM will be routed to your private ticket.*`
         )
       ]
     });
   } catch (err) {
-    console.error('[ModMail Create Error]', err);
-    await message.reply({
-      content: `❌ Failed to create support ticket: ${err.message}`
+    console.error('[ModMail Ticket Creation Error]', err);
+    await message.reply({ content: `❌ Failed to open support ticket: ${err.message}` });
+  }
+}
+
+// ==========================================
+// Staff Natural Chat in Ticket Channel (Staff -> User DM)
+// ==========================================
+async function handleStaffTicketMessage(message, activeTicket, client) {
+  const content = message.content.trim();
+
+  // Internal staff notes start with '=' or '//' (do not forward)
+  if (content.startsWith('=') || content.startsWith('//')) {
+    await message.react('📝').catch(() => {});
+    return;
+  }
+
+  // Skip if it's a slash command response or bot message
+  if (message.author.bot) return;
+
+  try {
+    const targetUser = await client.users.fetch(activeTicket.userId);
+    if (!targetUser) {
+      await message.reply({ content: '❌ Could not locate the member.' });
+      return;
+    }
+
+    const senderDisplay = activeTicket.isAnonymous ? '🛡️ Support Staff Team' : `🛡️ ${message.author.tag}`;
+    const attachments = message.attachments.map(a => a.url).join('\n');
+    const contentText = content || '*[Attachment/Image]*';
+
+    const embed = infoEmbed(
+      `Staff Response • ${message.guild.name}`,
+      contentText + (attachments ? `\n\n**Attachments**:\n${attachments}` : '')
+    )
+      .setFooter({ text: `From: ${senderDisplay}` });
+
+    await targetUser.send({ embeds: [embed] });
+
+    // Save to transcript
+    modmailDb.addTranscriptMessage(activeTicket.ticketId, {
+      author: senderDisplay,
+      content: contentText + (attachments ? ` (Attachment: ${attachments})` : ''),
+      isStaff: true
     });
+
+    // React with checkmark to confirm delivery
+    await message.react('✅').catch(() => {});
+  } catch (err) {
+    console.error('[ModMail Staff Message Error]', err);
+    await message.reply({
+      content: `⚠️ Failed to deliver message to user's DM: ${err.message}. Their DMs may be disabled.`
+    }).catch(() => {});
   }
 }

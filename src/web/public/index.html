@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOPT ENGINE • Management, Security & Economy Console</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="logo-icon">🪙</div>
+        <div class="brand-text">
+          <h1>TOPT ENGINE Console</h1>
+          <span class="badge online" id="status-badge"><span class="dot"></span> Online</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="refresh-indicator" id="last-updated">Updating...</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="dashboard-grid">
+      <!-- Metric: Bot Health -->
+      <div class="card metric-card">
+        <div class="card-icon blurple">🤖</div>
+        <div class="card-content">
+          <h3>Discord Connection</h3>
+          <div class="metric-value" id="bot-tag">Loading...</div>
+          <div class="metric-sub" id="bot-sub">Ping: -- ms • Memory: -- MB</div>
+        </div>
+      </div>
+
+      <!-- Metric: TOPT Circulation -->
+      <div class="card metric-card">
+        <div class="card-icon gold">🪙</div>
+        <div class="card-content">
+          <h3>TOPT in Circulation</h3>
+          <div class="metric-value" id="topt-circ">--</div>
+          <div class="metric-sub" id="traders-count">-- Registered Traders</div>
+        </div>
+      </div>
+
+      <!-- Metric: Security & Moderation -->
+      <div class="card metric-card">
+        <div class="card-icon red">🛡️</div>
+        <div class="card-content">
+          <h3>Security & AutoMod</h3>
+          <div class="metric-value" id="warnings-count">0 Warnings</div>
+          <div class="metric-sub">Anti-Nuke & Honeypot: Active</div>
+        </div>
+      </div>
+
+      <!-- Metric: Active ModMail Tickets -->
+      <div class="card metric-card">
+        <div class="card-icon blue">📬</div>
+        <div class="card-content">
+          <h3>Support ModMail</h3>
+          <div class="metric-value" id="tickets-count">0 Active</div>
+          <div class="metric-sub">Abyss-style DM Routing</div>
+        </div>
+      </div>
+
+      <!-- Section: Richest Traders -->
+      <div class="card large-card">
+        <div class="card-header">
+          <h2>🏆 Top TOPT Wealth Leaders</h2>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Trader ID</th>
+                <th>Net Worth</th>
+                <th>Streak</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <tr><td colspan="4" class="empty-state">Loading traders...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section: Console Terminal Output -->
+      <div class="card large-card">
+        <div class="card-header">
+          <h2>📟 System Logs & Live Status</h2>
+          <span class="live-tag">LIVE STREAM</span>
+        </div>
+        <div class="terminal-box" id="terminal-logs">
+          <div class="log-line"><span class="timestamp">[SYSTEM]</span> Web console initialized successfully.</div>
+          <div class="log-line"><span class="timestamp">[ENGINE]</span> Anti-Nuke Guardian & Honeypot traps engaged.</div>
+          <div class="log-line"><span class="timestamp">[MODMAIL]</span> DM routing engine listening for member tickets.</div>
+          <div class="log-line"><span class="timestamp">[READY]</span> Render Web Service health checks ready on /health.</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>TOPT ENGINE Security & Economy Assistant • Render Web Service Ready • Powered by Discord.js v14</p>
+    </footer>
+  </div>
+
+  <script>
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+
+        // Update Bot Card
+        document.getElementById('bot-tag').textContent = data.bot.tag;
+        document.getElementById('bot-sub').textContent = `Ping: ${data.bot.ping}ms • Memory: ${data.bot.memoryMb}MB • Uptime: ${Math.floor(data.bot.uptime / 60)}m`;
+
+        // Update Economy Card
+        document.getElementById('topt-circ').textContent = `🪙 ${data.economy.totalCirculation.toLocaleString()} TOPT`;
+        document.getElementById('traders-count').textContent = `${data.economy.registeredTraders} Registered Traders`;
+
+        // Update Security & Tickets
+        document.getElementById('warnings-count').textContent = `${data.security.totalWarnings} Warnings`;
+        document.getElementById('tickets-count').textContent = `${data.security.activeTickets} Active Tickets`;
+
+        // Update Leaderboard
+        const tbody = document.getElementById('leaderboard-body');
+        if (data.economy.topTraders.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No trader balances recorded yet.</td></tr>';
+        } else {
+          tbody.innerHTML = data.economy.topTraders.map((t, idx) => `
+            <tr>
+              <td><span class="rank-badge rank-${idx + 1}">#${idx + 1}</span></td>
+              <td><code>${t.userId}</code></td>
+              <td><strong>🪙 ${t.totalNetWorth.toLocaleString()} TOPT</strong></td>
+              <td>🔥 ${t.dailyStreak}d</td>
+            </tr>
+          `).join('');
+        }
+
+        document.getElementById('last-updated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+      }
+    }
+
+    updateStats();
+    setInterval(updateStats, 3000);
+  </script>
+</body>
+</html>

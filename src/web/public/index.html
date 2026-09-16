@@ -3,154 +3,363 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOPT ENGINE • Management, Security & Economy Console</title>
+  <title>⚡ TOPT ENGINE — Cyber Security & Trading Command Center</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Header -->
-    <header class="navbar">
-      <div class="brand">
-        <div class="logo-icon">🪙</div>
-        <div class="brand-text">
-          <h1>TOPT ENGINE Console</h1>
-          <span class="badge online" id="status-badge"><span class="dot"></span> Online</span>
+  <!-- Ambient Cyber Lighting Background -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-purple"></div>
+
+  <div class="command-container">
+    <!-- Top Cyber Header -->
+    <header class="cyber-header">
+      <div class="header-left">
+        <div class="engine-logo">
+          <div class="logo-core">⚡</div>
+          <div class="logo-ring"></div>
+        </div>
+        <div class="engine-title-group">
+          <div class="engine-title-row">
+            <h1>TOPT ENGINE</h1>
+            <span class="version-tag">v2.4 SEC-CYBER</span>
+            <span class="threat-badge secure" id="threat-badge">THREAT STATUS: SECURE</span>
+          </div>
+          <p class="engine-subtitle">Autonomous Trading Engine • Anti-Nuke Guardian • ModMail Dispatcher</p>
         </div>
       </div>
-      <div class="header-actions">
-        <span class="refresh-indicator" id="last-updated">Updating...</span>
+
+      <div class="header-vitals">
+        <div class="vital-item">
+          <span class="vital-label">GATEWAY LATENCY</span>
+          <span class="vital-value text-cyan" id="ping-display">-- ms</span>
+        </div>
+        <div class="vital-item">
+          <span class="vital-label">HEAP MEMORY</span>
+          <span class="vital-value text-purple" id="mem-display">-- MB</span>
+        </div>
+        <div class="vital-item">
+          <span class="vital-label">ACTIVE UPTIME</span>
+          <span class="vital-value text-green" id="uptime-display">--</span>
+        </div>
+        <div class="vital-status">
+          <span class="live-pulse"></span>
+          <span id="bot-tag-header">Connecting...</span>
+        </div>
       </div>
     </header>
 
-    <!-- Main Grid -->
-    <main class="dashboard-grid">
-      <!-- Metric: Bot Health -->
-      <div class="card metric-card">
-        <div class="card-icon blurple">🤖</div>
-        <div class="card-content">
-          <h3>Discord Connection</h3>
-          <div class="metric-value" id="bot-tag">Loading...</div>
-          <div class="metric-sub" id="bot-sub">Ping: -- ms • Memory: -- MB</div>
+    <!-- Navigation Tab Bar -->
+    <nav class="cyber-nav">
+      <button class="nav-tab active" data-tab="overview">
+        <span class="tab-icon">📊</span> Command Center
+      </button>
+      <button class="nav-tab" data-tab="market">
+        <span class="tab-icon">📈</span> TOPT Market & Chart
+      </button>
+      <button class="nav-tab" data-tab="terminal">
+        <span class="tab-icon">📟</span> Live CLI & Logs
+      </button>
+      <button class="nav-tab" data-tab="security">
+        <span class="tab-icon">🎛️</span> Defense Matrix
+      </button>
+      <button class="nav-tab" data-tab="modmail">
+        <span class="tab-icon">📬</span> ModMail Dispatcher
+      </button>
+      <button class="nav-tab" data-tab="economy">
+        <span class="tab-icon">🏆</span> Wealth Leaderboard
+      </button>
+    </nav>
+
+    <!-- TAB 1: OVERVIEW / COMMAND CENTER -->
+    <section class="tab-view active" id="view-overview">
+      <!-- Top Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-glass-card border-gold">
+          <div class="card-glow-indicator gold"></div>
+          <div class="metric-top">
+            <span class="card-label">TOPT TOTAL CIRCULATION</span>
+            <span class="card-badge gold">ECONOMY</span>
+          </div>
+          <div class="metric-number text-gold" id="metric-circ">-- TOPT</div>
+          <div class="metric-meta" id="metric-traders">-- Traders Registered</div>
+        </div>
+
+        <div class="metric-glass-card border-cyan">
+          <div class="card-glow-indicator cyan"></div>
+          <div class="metric-top">
+            <span class="card-label">MODMAIL ACTIVE INQUIRIES</span>
+            <span class="card-badge cyan">SUPPORT</span>
+          </div>
+          <div class="metric-number text-cyan" id="metric-tickets">-- Open</div>
+          <div class="metric-meta">Abyss-style 2-Way Direct Message Routing</div>
+        </div>
+
+        <div class="metric-glass-card border-red">
+          <div class="card-glow-indicator red"></div>
+          <div class="metric-top">
+            <span class="card-label">SECURITY INCIDENTS</span>
+            <span class="card-badge red">DEFENSE</span>
+          </div>
+          <div class="metric-number text-red" id="metric-warnings">-- Logged</div>
+          <div class="metric-meta">Anti-Nuke Guardian & Honeypot: Armed</div>
+        </div>
+
+        <div class="metric-glass-card border-green">
+          <div class="card-glow-indicator green"></div>
+          <div class="metric-top">
+            <span class="card-label">CONNECTED NETWORK</span>
+            <span class="card-badge green">TOPOLOGY</span>
+          </div>
+          <div class="metric-number text-green" id="metric-servers">-- Guild</div>
+          <div class="metric-meta">Render Web Service Node • Port Active</div>
         </div>
       </div>
 
-      <!-- Metric: TOPT Circulation -->
-      <div class="card metric-card">
-        <div class="card-icon gold">🪙</div>
-        <div class="card-content">
-          <h3>TOPT in Circulation</h3>
-          <div class="metric-value" id="topt-circ">--</div>
-          <div class="metric-sub" id="traders-count">-- Registered Traders</div>
-        </div>
+      <!-- Quick Action Floating Bar -->
+      <div class="quick-actions-bar">
+        <span class="qa-title">⚡ QUICK DISPATCH:</span>
+        <button class="action-chip cyan" onclick="switchTab('terminal')">Run CLI Command</button>
+        <button class="action-chip gold" onclick="switchTab('market')">Inspect Price Chart</button>
+        <button class="action-chip red" onclick="switchTab('security')">Adjust Defense Matrix</button>
+        <button class="action-chip purple" onclick="switchTab('modmail')">Check Support Inquiries</button>
       </div>
 
-      <!-- Metric: Security & Moderation -->
-      <div class="card metric-card">
-        <div class="card-icon red">🛡️</div>
-        <div class="card-content">
-          <h3>Security & AutoMod</h3>
-          <div class="metric-value" id="warnings-count">0 Warnings</div>
-          <div class="metric-sub">Anti-Nuke & Honeypot: Active</div>
+      <!-- Split View: Market Snapshot & System Logs -->
+      <div class="split-row">
+        <!-- Market Preview Mini -->
+        <div class="cyber-panel">
+          <div class="panel-header">
+            <h3>📈 TOPT/USD Volatility & Market Index</h3>
+            <button class="cyber-btn small" onclick="switchTab('market')">Expand Full Chart →</button>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="marketCanvas" class="market-canvas"></canvas>
+          </div>
+          <div class="market-sub-stats">
+            <div><span class="text-muted">INDEX PRICE:</span> <strong id="price-value" class="text-green">$--</strong></div>
+            <div><span class="text-muted">24H HIGH:</span> <strong id="high-value">$--</strong></div>
+            <div><span class="text-muted">24H LOW:</span> <strong id="low-value">$--</strong></div>
+            <div><span class="text-muted">24H VOL:</span> <strong id="vol-value" class="text-gold">-- TOPT</strong></div>
+          </div>
+        </div>
+
+        <!-- Live Log Stream -->
+        <div class="cyber-panel">
+          <div class="panel-header">
+            <h3>📟 Real-Time Audit Stream</h3>
+            <div class="log-filter-group">
+              <button class="log-filter-btn active" data-filter="ALL">ALL</button>
+              <button class="log-filter-btn" data-filter="SECURITY">SECURITY</button>
+              <button class="log-filter-btn" data-filter="ECONOMY">ECONOMY</button>
+              <button class="log-filter-btn" data-filter="MODMAIL">MODMAIL</button>
+            </div>
+          </div>
+          <div class="log-stream-box" id="log-stream">
+            <div class="log-entry">Loading audit telemetry...</div>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Metric: Active ModMail Tickets -->
-      <div class="card metric-card">
-        <div class="card-icon blue">📬</div>
-        <div class="card-content">
-          <h3>Support ModMail</h3>
-          <div class="metric-value" id="tickets-count">0 Active</div>
-          <div class="metric-sub">Abyss-style DM Routing</div>
+    <!-- TAB 2: MARKET & FINANCIAL CHART -->
+    <section class="tab-view" id="view-market">
+      <div class="cyber-panel full-width">
+        <div class="panel-header">
+          <div>
+            <h2>TOPT Currency Financial Exchange Index</h2>
+            <p class="panel-desc">Real-time valuation, circulation volume, and orderbook volatility telemetry.</p>
+          </div>
+          <div class="market-ticker-box">
+            <span class="ticker-symbol">🪙 TOPT/USD</span>
+            <span class="ticker-price text-cyan" id="mcap-value">Market Cap: Loading...</span>
+          </div>
+        </div>
+
+        <div class="canvas-wrapper large">
+          <canvas id="marketCanvasFull" class="market-canvas"></canvas>
+        </div>
+
+        <div class="market-highlights-grid">
+          <div class="highlight-box">
+            <span class="h-label">TOKEN IDENTITY</span>
+            <span class="h-val">TOPT (🪙 TOP T Engine)</span>
+          </div>
+          <div class="highlight-box">
+            <span class="h-label">CONSENSUS</span>
+            <span class="h-val text-green">Proof of Trading (PoT)</span>
+          </div>
+          <div class="highlight-box">
+            <span class="h-label">MINING / EARNING</span>
+            <span class="h-val text-gold">/hunt, /work, /daily dividends</span>
+          </div>
+          <div class="highlight-box">
+            <span class="h-label">DEFLATION MECHANISM</span>
+            <span class="h-val text-purple">Shop Upgrades & Casino Burns</span>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Section: Richest Traders -->
-      <div class="card large-card">
-        <div class="card-header">
-          <h2>🏆 Top TOPT Wealth Leaders</h2>
+    <!-- TAB 3: LIVE CLI TERMINAL -->
+    <section class="tab-view" id="view-terminal">
+      <div class="cyber-panel full-width terminal-panel">
+        <div class="panel-header terminal-header">
+          <div class="term-title-group">
+            <span class="term-dot dot-red"></span>
+            <span class="term-dot dot-yellow"></span>
+            <span class="term-dot dot-green"></span>
+            <span class="term-title">topt-engine@console: ~</span>
+          </div>
+          <div class="term-actions">
+            <button class="cyber-btn small danger" id="btn-clear-term">Clear Terminal</button>
+          </div>
+        </div>
+
+        <div class="terminal-body" id="terminal-output">
+          <div class="term-line term-success">⚡ TOPT ENGINE Cyber Command Terminal Initialized.</div>
+          <div class="term-line term-info">Type 'help' to inspect available console commands.</div>
+        </div>
+
+        <div class="terminal-input-row">
+          <span class="term-prompt">topt &gt;</span>
+          <input type="text" id="terminal-input" class="term-input" placeholder="Type command (e.g. status, help, broadcast <msg>, give <user> <amt>)..." autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: DEFENSE MATRIX -->
+    <section class="tab-view" id="view-security">
+      <div class="split-row">
+        <!-- Switches Panel -->
+        <div class="cyber-panel">
+          <div class="panel-header">
+            <h3>🎛️ AutoMod & Anti-Nuke Control Switchboard</h3>
+          </div>
+          <p class="panel-desc">Toggle automated protection filters in real-time without touching Discord.</p>
+
+          <div class="switchboard-list">
+            <div class="switch-item">
+              <div class="switch-info">
+                <h4>🔗 Anti-Invite Link Shield</h4>
+                <p>Instantly removes unauthorized Discord server invites (`discord.gg/*`).</p>
+              </div>
+              <label class="cyber-toggle">
+                <input type="checkbox" id="toggle-antiInvite">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-item">
+              <div class="switch-info">
+                <h4>🌐 External URL Filter (Anti-Link)</h4>
+                <p>Blocks unapproved external web links in non-media channels.</p>
+              </div>
+              <label class="cyber-toggle">
+                <input type="checkbox" id="toggle-antiLink">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-item">
+              <div class="switch-info">
+                <h4>⚡ Anti-Spam Flood Detection</h4>
+                <p>Automatically mutes accounts posting rapid duplicate message floods.</p>
+              </div>
+              <label class="cyber-toggle">
+                <input type="checkbox" id="toggle-antiSpam">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-item highlight-security">
+              <div class="switch-info">
+                <h4>🚨 Anti-Nuke Guardian Defense</h4>
+                <p>Rate limits channel/role deletion & mass bans. Auto-strips rogue admin roles.</p>
+              </div>
+              <label class="cyber-toggle">
+                <input type="checkbox" id="toggle-antiNuke">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blacklist Word Manager -->
+        <div class="cyber-panel">
+          <div class="panel-header">
+            <h3>🚫 Banned Words & Scam Filter</h3>
+          </div>
+          <p class="panel-desc">Messages containing these terms will be immediately deleted and penalized.</p>
+
+          <div class="blacklist-input-group">
+            <input type="text" id="input-blacklist-word" class="cyber-input" placeholder="Enter word or phrase (e.g. steam nitro, airdrop)...">
+            <button class="cyber-btn primary" id="btn-add-word">Add Word</button>
+          </div>
+
+          <div class="blacklist-tags-container" id="blacklist-tags">
+            <!-- Dynamically populated tags -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: MODMAIL DISPATCHER -->
+    <section class="tab-view" id="view-modmail">
+      <div class="cyber-panel full-width">
+        <div class="panel-header">
+          <div>
+            <h2>📬 Abyss-Style ModMail Support Dispatcher</h2>
+            <p class="panel-desc">Review incoming direct messages from server members and send replies directly from the browser.</p>
+          </div>
+        </div>
+
+        <div class="tickets-grid" id="tickets-container">
+          <!-- Dynamically populated tickets -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: WEALTH LEADERBOARD -->
+    <section class="tab-view" id="view-economy">
+      <div class="cyber-panel full-width">
+        <div class="panel-header">
+          <h2>🏆 Top TOPT Wealth & Net Worth Leaders</h2>
+          <span class="card-badge gold">TOPT FINANCIAL EXCHANGE</span>
         </div>
         <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
                 <th>Rank</th>
-                <th>Trader ID</th>
+                <th>Trader Account</th>
                 <th>Net Worth</th>
-                <th>Streak</th>
+                <th>Wallet Holdings</th>
+                <th>Dividend Streak</th>
               </tr>
             </thead>
-            <tbody id="leaderboard-body">
-              <tr><td colspan="4" class="empty-state">Loading traders...</td></tr>
+            <tbody id="leaderboard-tbody">
+              <tr><td colspan="5" class="empty-state">Loading records...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-
-      <!-- Section: Console Terminal Output -->
-      <div class="card large-card">
-        <div class="card-header">
-          <h2>📟 System Logs & Live Status</h2>
-          <span class="live-tag">LIVE STREAM</span>
-        </div>
-        <div class="terminal-box" id="terminal-logs">
-          <div class="log-line"><span class="timestamp">[SYSTEM]</span> Web console initialized successfully.</div>
-          <div class="log-line"><span class="timestamp">[ENGINE]</span> Anti-Nuke Guardian & Honeypot traps engaged.</div>
-          <div class="log-line"><span class="timestamp">[MODMAIL]</span> DM routing engine listening for member tickets.</div>
-          <div class="log-line"><span class="timestamp">[READY]</span> Render Web Service health checks ready on /health.</div>
-        </div>
-      </div>
-    </main>
+    </section>
 
     <!-- Footer -->
-    <footer class="footer">
-      <p>TOPT ENGINE Security & Economy Assistant • Render Web Service Ready • Powered by Discord.js v14</p>
+    <footer class="cyber-footer">
+      <div class="footer-left">
+        <span>⚡ TOPT ENGINE Cyber Command Center</span> • <span>Render Web Service Production Ready</span>
+      </div>
+      <div class="footer-right">
+        <span>Engineered with Discord.js v14 & Express</span>
+      </div>
     </footer>
   </div>
 
-  <script>
-    async function updateStats() {
-      try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-
-        // Update Bot Card
-        document.getElementById('bot-tag').textContent = data.bot.tag;
-        document.getElementById('bot-sub').textContent = `Ping: ${data.bot.ping}ms • Memory: ${data.bot.memoryMb}MB • Uptime: ${Math.floor(data.bot.uptime / 60)}m`;
-
-        // Update Economy Card
-        document.getElementById('topt-circ').textContent = `🪙 ${data.economy.totalCirculation.toLocaleString()} TOPT`;
-        document.getElementById('traders-count').textContent = `${data.economy.registeredTraders} Registered Traders`;
-
-        // Update Security & Tickets
-        document.getElementById('warnings-count').textContent = `${data.security.totalWarnings} Warnings`;
-        document.getElementById('tickets-count').textContent = `${data.security.activeTickets} Active Tickets`;
-
-        // Update Leaderboard
-        const tbody = document.getElementById('leaderboard-body');
-        if (data.economy.topTraders.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No trader balances recorded yet.</td></tr>';
-        } else {
-          tbody.innerHTML = data.economy.topTraders.map((t, idx) => `
-            <tr>
-              <td><span class="rank-badge rank-${idx + 1}">#${idx + 1}</span></td>
-              <td><code>${t.userId}</code></td>
-              <td><strong>🪙 ${t.totalNetWorth.toLocaleString()} TOPT</strong></td>
-              <td>🔥 ${t.dailyStreak}d</td>
-            </tr>
-          `).join('');
-        }
-
-        document.getElementById('last-updated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
-      } catch (err) {
-        console.error('Failed to fetch stats:', err);
-      }
-    }
-
-    updateStats();
-    setInterval(updateStats, 3000);
-  </script>
+  <script src="/app.js"></script>
 </body>
 </html>

@@ -74,6 +74,7 @@ module.exports = {
               embeds: [successEmbed('Role Assigned', `✅ Granted the **${role.name}** role to your profile!`)],
               ephemeral: true
             });
+          }
         } catch (err) {
           console.error('[Self-Role Error]', err);
           return interaction.reply({

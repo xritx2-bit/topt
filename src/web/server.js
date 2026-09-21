@@ -273,6 +273,8 @@ function startWebServer(client) {
             '  tickets           - List all open ModMail tickets',
             '  threat            - Display current Anti-Nuke and Honeypot status',
             '  servers           - List connected Discord servers',
+            '  dbstatus          - Check if MongoDB cloud persistence is active',
+            '  backup            - Create a complete JSON database snapshot',
             '  keepalive         - Inspect 24/7 keep-alive pulse & uptime sentinel',
             '  pingpulse         - Send an immediate keep-alive pulse to health URL',
             '  deploy            - Force sync all 38 slash commands to Discord servers',
@@ -464,6 +466,42 @@ function startWebServer(client) {
         }
       }
 
+      case 'dbstatus':
+      case 'database': {
+        const s = db.getStorageStatus();
+        return res.json({
+          success: true,
+          output: [
+            '====================================================',
+            '💾 TOPT ENGINE DATABASE & PERSISTENCE DIAGNOSTICS',
+            '====================================================',
+            `  Storage Driver:   ${s.type}`,
+            `  Persistence:      ${s.status}`,
+            `  Registered Users: ${Object.keys(db.users).length}`,
+            `  Total Inventory:  ${Object.keys(db.inventory).length} accounts`,
+            '----------------------------------------------------',
+            s.persistent
+              ? '✅ All balances are saved permanently to MongoDB Atlas in real-time!'
+              : '⚠️ Render Free Tier wipes local disk on restart!\n👉 Add MONGODB_URI to Render Environment Variables to keep data forever.',
+            '===================================================='
+          ].join('\n')
+        });
+      }
+
+      case 'backup': {
+        const usersCount = Object.keys(db.users).length;
+        const totalCoins = Object.values(db.users).reduce((s, u) => s + (u.wallet || 0) + (u.bank || 0), 0);
+        return res.json({
+          success: true,
+          output: [
+            '📦 Database Snapshot Ready:',
+            `  Registered Traders: ${usersCount}`,
+            `  Circulating Coins:  🪙 ${totalCoins.toLocaleString()} TOPT`,
+            `  Download full JSON backup via endpoint: /api/database/backup`
+          ].join('\n')
+        });
+      }
+
       case 'servers':
       case 'guilds': {
         const guildList = client.guilds?.cache ? Array.from(client.guilds.cache.values()) : [];
@@ -576,6 +614,14 @@ function startWebServer(client) {
     } catch (err) {
       res.status(500).json({ success: false, message: `Failed to deliver DM: ${err.message}` });
     }
+  });
+
+  // Download full JSON backup of all database collections
+  app.get('/api/database/backup', (req, res) => {
+    const backupData = db.exportAll();
+    res.setHeader('Content-Disposition', `attachment; filename="topt-backup-${Date.now()}.json"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(backupData, null, 2));
   });
 
   // Trigger immediate keep-alive pulse from dashboard

@@ -14,6 +14,7 @@ const {
   resolveKeepAliveUrl,
   formatHealthUrl
 } = require('../utils/keepAlive');
+const { deploySlashCommands } = require('../utils/deployer');
 
 // Recent system log cache for web console streaming
 const recentLogs = [
@@ -171,6 +172,81 @@ function startWebServer(client) {
     res.json(tickets);
   });
 
+  // Helper: Resolve Discord user from @mention, username, nickname, or Snowflake ID
+  async function resolveTargetUser(input, client) {
+    if (!input) return null;
+    let clean = input.trim();
+
+    // Strip mention tags e.g. <@!123456789> or <@123456789>
+    const mentionMatch = clean.match(/^<@!?(\d{17,20})>$/);
+    if (mentionMatch) {
+      const id = mentionMatch[1];
+      let tag = id;
+      try {
+        const u = await client.users?.fetch?.(id).catch(() => null);
+        if (u) tag = u.tag || u.username;
+      } catch {}
+      return { id, tag };
+    }
+
+    // Pure numeric Discord snowflake ID
+    if (/^\d{17,20}$/.test(clean)) {
+      let tag = clean;
+      try {
+        const u = await client.users?.fetch?.(clean).catch(() => null);
+        if (u) tag = u.tag || u.username;
+      } catch {}
+      return { id: clean, tag };
+    }
+
+    // Search by username / tag / nickname
+    const searchName = clean.replace(/^@/, '').toLowerCase();
+
+    // Search in connected guilds member caches
+    if (client.guilds && client.guilds.cache) {
+      const guildList = Array.from(client.guilds.cache.values ? client.guilds.cache.values() : []);
+      for (const guild of guildList) {
+        if (!guild.members || !guild.members.cache) continue;
+        const membersList = Array.from(guild.members.cache.values ? guild.members.cache.values() : []);
+        const member = membersList.find(m =>
+          (m.user?.username && m.user.username.toLowerCase() === searchName) ||
+          (m.user?.tag && m.user.tag.toLowerCase() === searchName) ||
+          (m.nickname && m.nickname.toLowerCase() === searchName)
+        );
+        if (member) {
+          return { id: member.id, tag: member.user?.tag || member.user?.username || member.id };
+        }
+      }
+    }
+
+    // Search in global client users cache
+    if (client.users && client.users.cache) {
+      const userList = Array.from(client.users.cache.values ? client.users.cache.values() : []);
+      const u = userList.find(user =>
+        (user.username && user.username.toLowerCase() === searchName) ||
+        (user.tag && user.tag.toLowerCase() === searchName)
+      );
+      if (u) return { id: u.id, tag: u.tag || u.username || u.id };
+    }
+
+    // Search in database known users
+    const dbEntry = Object.values(db.users).find(user =>
+      (user.username && user.username.toLowerCase() === searchName) ||
+      (user.tag && user.tag.toLowerCase() === searchName)
+    );
+    if (dbEntry) {
+      return { id: dbEntry.userId, tag: dbEntry.tag || dbEntry.username || dbEntry.userId };
+    }
+
+    // Fallback: If input contains any 17-20 digit sequence
+    const fallbackDigits = clean.match(/\d{17,20}/);
+    if (fallbackDigits) {
+      return { id: fallbackDigits[0], tag: fallbackDigits[0] };
+    }
+
+    return null;
+  }
+
   // Interactive Web Terminal Command Execution
   app.post('/api/terminal', async (req, res) => {
     const rawCmd = (req.body.command || '').trim();
@@ -196,10 +272,13 @@ function startWebServer(client) {
             '  stats             - Display economy & market metrics',
             '  tickets           - List all open ModMail tickets',
             '  threat            - Display current Anti-Nuke and Honeypot status',
+            '  servers           - List connected Discord servers',
             '  keepalive         - Inspect 24/7 keep-alive pulse & uptime sentinel',
             '  pingpulse         - Send an immediate keep-alive pulse to health URL',
+            '  deploy            - Force sync all 38 slash commands to Discord servers',
+            '  give <user> <amt> - Credit TOPT currency (supports @mention, username, or ID)',
+            '  balance <user>    - Check user wallet and bank balance',
             '  broadcast <msg>   - Send an announcement to server',
-            '  give <user> <amt> - Credit TOPT currency to a user wallet',
             '  cls / clear       - Clear terminal output',
             '  ping              - Test gateway WebSocket latency',
             '===================================================='
@@ -276,14 +355,127 @@ function startWebServer(client) {
       case 'ping':
         return res.json({ success: true, output: `[PONG] WebSocket Latency: ${client.ws ? Math.round(client.ws.ping) : 0}ms` });
 
-      case 'give':
-        if (args.length < 2) return res.json({ success: false, output: 'Usage: give <userId> <amount>' });
-        const targetId = args[0];
-        const amt = parseInt(args[1], 10);
-        if (isNaN(amt) || amt <= 0) return res.json({ success: false, output: 'Invalid amount.' });
-        economyDb.addWallet(targetId, amt);
-        logEvent('ECONOMY', `Console credited ${amt} TOPT to ${targetId}`);
-        return res.json({ success: true, output: `[SUCCESS] Credited 🪙 ${amt.toLocaleString()} TOPT to user ${targetId}.` });
+      case 'give': {
+        // Filter out extraneous words like "topt", "currency", "to", "coins"
+        const cleanArgs = args.filter(a => !['topt', 'currency', 'to', 'coins', 't'].includes(a.toLowerCase()));
+        if (cleanArgs.length < 2) {
+          return res.json({
+            success: false,
+            output: [
+              '⚠️ Usage: give <user/username/@mention/id> <amount>',
+              'Examples:',
+              '  give @username 5000',
+              '  give username 5000',
+              '  give 123456789012345678 5000',
+              '  give 5000 @username'
+            ].join('\n')
+          });
+        }
+
+        let targetInput = cleanArgs[0];
+        let amt = parseInt(cleanArgs[1], 10);
+
+        // Allow reversed argument order e.g. "give 5000 @username"
+        if (isNaN(amt) && !isNaN(parseInt(cleanArgs[0], 10))) {
+          amt = parseInt(cleanArgs[0], 10);
+          targetInput = cleanArgs[1];
+        }
+
+        if (isNaN(amt) || amt <= 0) {
+          return res.json({ success: false, output: `Invalid amount: "${cleanArgs[1]}". Please specify a positive number.` });
+        }
+
+        const resolved = await resolveTargetUser(targetInput, client);
+        if (!resolved) {
+          return res.json({
+            success: false,
+            output: `❌ Could not find Discord user "${targetInput}".\nPlease provide their @mention, username, or Discord User ID (e.g. 123456789012345678).`
+          });
+        }
+
+        const userAcc = economyDb.addWallet(resolved.id, amt);
+        if (resolved.tag && resolved.tag !== resolved.id) {
+          userAcc.tag = resolved.tag;
+          db.save('users');
+        }
+
+        logEvent('ECONOMY', `Console credited ${amt} TOPT to ${resolved.tag} (${resolved.id})`);
+        return res.json({
+          success: true,
+          output: [
+            `✅ [SUCCESS] Credited 🪙 ${amt.toLocaleString()} TOPT to ${resolved.tag}!`,
+            `   User ID:        ${resolved.id}`,
+            `   Wallet Balance: 🪙 ${userAcc.wallet.toLocaleString()} TOPT`,
+            `   Bank Balance:   🪙 ${userAcc.bank.toLocaleString()} TOPT`,
+            `   Net Worth:      🪙 ${(userAcc.wallet + userAcc.bank).toLocaleString()} TOPT`
+          ].join('\n')
+        });
+      }
+
+      case 'balance':
+      case 'bal':
+      case 'cash': {
+        const cleanArgs = args.filter(a => !['topt', 'currency', 'of'].includes(a.toLowerCase()));
+        if (cleanArgs.length === 0) {
+          return res.json({ success: false, output: 'Usage: balance <@user/username/userId>' });
+        }
+        const resolved = await resolveTargetUser(cleanArgs[0], client);
+        if (!resolved) {
+          return res.json({ success: false, output: `❌ User "${cleanArgs[0]}" not found.` });
+        }
+        const userAcc = economyDb.getUser(resolved.id);
+        return res.json({
+          success: true,
+          output: [
+            `💳 Account Profile: ${resolved.tag} (${resolved.id})`,
+            `   Wallet:    🪙 ${userAcc.wallet.toLocaleString()} TOPT`,
+            `   Bank:      🪙 ${userAcc.bank.toLocaleString()} TOPT`,
+            `   Net Worth: 🪙 ${(userAcc.wallet + userAcc.bank).toLocaleString()} TOPT`,
+            `   Streak:    🔥 ${userAcc.dailyStreak || 0} days`
+          ].join('\n')
+        });
+      }
+
+      case 'deploy':
+      case 'syncslash': {
+        logEvent('SYSTEM', 'Manual slash command deployment triggered from web console');
+        const dRes = await deploySlashCommands(client);
+        if (dRes.success) {
+          const guildList = (dRes.results.guildsUpdated || []).map(g => `  • ${g.name} (${g.id})`).join('\n');
+          return res.json({
+            success: true,
+            output: [
+              '====================================================',
+              `⚡ [DEPLOY SUCCESS] ${dRes.results.totalCommands} Slash Commands Synchronized!`,
+              '====================================================',
+              `  Guilds Updated Instantly: ${dRes.results.guildsUpdated.length}`,
+              guildList ? guildList : '  (No connected servers yet)',
+              `  Global Registration:      ${dRes.results.globalUpdated ? 'SUCCESS (Active globally)' : 'Pending'}`,
+              '----------------------------------------------------',
+              '👉 Slash commands (/) should now appear immediately in your Discord server!',
+              '===================================================='
+            ].join('\n')
+          });
+        } else {
+          return res.json({
+            success: false,
+            output: `❌ Slash command deployment failed: ${dRes.error || dRes.results?.errors?.join(', ') || 'Unknown error'}`
+          });
+        }
+      }
+
+      case 'servers':
+      case 'guilds': {
+        const guildList = client.guilds?.cache ? Array.from(client.guilds.cache.values()) : [];
+        if (guildList.length === 0) {
+          return res.json({ success: true, output: '⚠️ The bot is not currently connected to any Discord servers.' });
+        }
+        const out = guildList.map((g, i) => `  ${i + 1}. "${g.name}" (ID: ${g.id}) • ${g.memberCount} members`).join('\n');
+        return res.json({
+          success: true,
+          output: `🌐 Connected Discord Servers (${guildList.length}):\n${out}`
+        });
+      }
 
       case 'broadcast':
         const messageText = args.join(' ');

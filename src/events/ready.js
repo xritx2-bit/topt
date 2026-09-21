@@ -22,5 +22,11 @@ module.exports = {
       ],
       status: 'online'
     });
+
+    // Automatically synchronize slash commands with Discord on startup
+    const { deploySlashCommands } = require('../utils/deployer');
+    deploySlashCommands(client).catch(err => {
+      console.error('❌ [Ready] Failed to auto-deploy slash commands:', err);
+    });
   }
 };

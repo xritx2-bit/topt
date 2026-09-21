@@ -278,6 +278,7 @@ function startWebServer(client) {
             '  keepalive         - Inspect 24/7 keep-alive pulse & uptime sentinel',
             '  pingpulse         - Send an immediate keep-alive pulse to health URL',
             '  deploy            - Force sync all 38 slash commands to Discord servers',
+            '  roles / syncroles - Auto-create all shop Discord roles across servers',
             '  give <user> <amt> - Credit TOPT currency (supports @mention, username, or ID)',
             '  balance <user>    - Check user wallet and bank balance',
             '  broadcast <msg>   - Send an announcement to server',
@@ -356,6 +357,27 @@ function startWebServer(client) {
 
       case 'ping':
         return res.json({ success: true, output: `[PONG] WebSocket Latency: ${client.ws ? Math.round(client.ws.ping) : 0}ms` });
+
+      case 'roles':
+      case 'syncroles': {
+        const { syncAllGuildShopRoles } = require('../utils/shopRoles');
+        await syncAllGuildShopRoles(client);
+        return res.json({
+          success: true,
+          output: [
+            '====================================================',
+            '🎭 TOPT SHOP DISCORD ROLES SYNCHRONIZED',
+            '====================================================',
+            '  • 💎 VIP Trader      (#F1C40F Gold, Hoisted)',
+            '  • 📜 Licensed Broker (#3498DB Blue)',
+            '  • 🔭 Master Surveyor (#9B59B6 Purple)',
+            '  • 🍀 Lucky Gambler   (#2ECC71 Green)',
+            '----------------------------------------------------',
+            'All shop roles verified and retroactively synced to existing owners.',
+            '===================================================='
+          ].join('\n')
+        });
+      }
 
       case 'give': {
         // Filter out extraneous words like "topt", "currency", "to", "coins"

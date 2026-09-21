@@ -26,10 +26,19 @@ module.exports = {
       return interaction.reply({ embeds: [errorEmbed('Purchase Failed', result.message)], ephemeral: true });
     }
 
+    let roleNotice = '';
+    if (interaction.guild && result.item.roleName) {
+      const { assignShopRole } = require('../../utils/shopRoles');
+      const roleResult = await assignShopRole(interaction.guild, interaction.member, result.item);
+      if (roleResult.assigned && roleResult.role) {
+        roleNotice = `\n🎭 **Discord Role**: <@&${roleResult.role.id}> has been granted to your server profile!`;
+      }
+    }
+
     const embed = successEmbed(
       'Purchase Successful!',
       `🛍️ You acquired **${result.item.emoji} ${result.item.name}** for **${formatCurrency(result.item.price)}**!\n` +
-      `✨ *Perk: ${result.item.description}*`
+      `✨ *Perk: ${result.item.description}*${roleNotice}`
     );
     await interaction.reply({ embeds: [embed] });
   },
@@ -48,10 +57,19 @@ module.exports = {
       return message.reply({ embeds: [errorEmbed('Purchase Failed', result.message)] });
     }
 
+    let roleNotice = '';
+    if (message.guild && result.item.roleName) {
+      const { assignShopRole } = require('../../utils/shopRoles');
+      const roleResult = await assignShopRole(message.guild, message.member, result.item);
+      if (roleResult.assigned && roleResult.role) {
+        roleNotice = `\n🎭 **Discord Role**: <@&${roleResult.role.id}> has been granted to your server profile!`;
+      }
+    }
+
     const embed = successEmbed(
       'Purchase Successful!',
       `🛍️ You acquired **${result.item.emoji} ${result.item.name}** for **${formatCurrency(result.item.price)}**!\n` +
-      `✨ *Perk: ${result.item.description}*`
+      `✨ *Perk: ${result.item.description}*${roleNotice}`
     );
     await message.reply({ embeds: [embed] });
   }

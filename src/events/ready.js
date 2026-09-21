@@ -28,5 +28,11 @@ module.exports = {
     deploySlashCommands(client).catch(err => {
       console.error('❌ [Ready] Failed to auto-deploy slash commands:', err);
     });
+
+    // Automatically ensure all shop roles exist in connected servers and sync members
+    const { syncAllGuildShopRoles } = require('../utils/shopRoles');
+    syncAllGuildShopRoles(client).catch(err => {
+      console.error('❌ [Ready] Failed to sync shop roles:', err);
+    });
   }
 };

@@ -125,35 +125,47 @@ module.exports = {
     { id: 'private_planet', name: 'Orbital Terraformed Planet', emoji: '🪐', rarity: 'Mythic', chance: 0.005, sellPrice: 35000 }
   ],
 
-  // Shop Items with utility perks
+  // Shop Items with utility perks and exclusive Discord roles
   shopItems: [
     {
       id: 'lucky_coin',
       name: 'Lucky Coin',
       emoji: '🍀',
       price: 3000,
-      description: '+5% higher win probability on Coinflip and Dice games'
+      description: '+5% higher win probability on Coinflip and Dice games',
+      roleName: 'Lucky Gambler',
+      roleColor: 0x2ECC71,
+      hoist: false
     },
     {
       id: 'trader_license',
       name: "Broker's License",
       emoji: '📜',
       price: 6000,
-      description: '+30% bonus TOPT coins earned from /work shifts'
+      description: '+30% bonus TOPT coins earned from /work shifts',
+      roleName: 'Licensed Broker',
+      roleColor: 0x3498DB,
+      hoist: false
     },
     {
       id: 'hunter_scope',
       name: "Surveyor's Lens",
       emoji: '🔭',
       price: 12000,
-      description: 'Increases chance of finding Epic, Legendary & Mythic assets in /hunt'
+      description: 'Increases chance of finding Epic, Legendary & Mythic assets in /hunt',
+      roleName: 'Master Surveyor',
+      roleColor: 0x9B59B6,
+      hoist: false
     },
     {
       id: 'vip_badge',
       name: 'VIP Trader Badge',
       emoji: '💎',
       price: 30000,
-      description: 'Prestigious VIP badge shown on your profile + 20% daily bonus'
+      description: 'Prestigious VIP badge shown on your profile + 20% daily bonus',
+      roleName: 'VIP Trader',
+      roleColor: 0xF1C40F,
+      hoist: true
     }
   ]
 };

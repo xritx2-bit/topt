@@ -27,9 +27,10 @@ function createShopEmbed() {
   );
 
   config.shopItems.forEach(item => {
+    const roleText = item.roleName ? `\n> 🎭 **Grants Discord Role**: \`${item.roleName}\`` : '';
     embed.addFields({
       name: `${item.emoji} **${item.name}** — \`${formatCurrency(item.price)}\``,
-      value: `> *${item.description}*\n> **Item ID**: \`${item.id}\` • Purchase with: \`topt buy ${item.id}\`\n`,
+      value: `> *${item.description}*${roleText}\n> **Item ID**: \`${item.id}\` • Purchase with: \`topt buy ${item.id}\`\n`,
       inline: false
     });
   });

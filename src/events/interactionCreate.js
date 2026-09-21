@@ -50,9 +50,16 @@ module.exports = {
       return;
     }
 
-    // 2. Handle Self-Role Button Clicks
+    // 2. Handle Self-Role & Shop Button Clicks
     if (interaction.isButton()) {
       const customId = interaction.customId;
+
+      // Handle Shop Quick-Buy Buttons
+      if (customId.startsWith('shop_buy_')) {
+        const itemId = customId.replace('shop_buy_', '');
+        const { processShopPurchase } = require('../commands/economy/buy');
+        return processShopPurchase(interaction, itemId);
+      }
 
       if (customId.startsWith('sr_')) {
         const selfRole = selfRoleDb.getSelfRole(customId);
@@ -202,6 +209,15 @@ module.exports = {
           ],
           ephemeral: true
         });
+      }
+    }
+
+    // 4. Handle String Select Menu Interactions
+    if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === 'shop_select_buy') {
+        const itemId = interaction.values[0];
+        const { processShopPurchase } = require('../commands/economy/buy');
+        return processShopPurchase(interaction, itemId);
       }
     }
   }

@@ -113,28 +113,33 @@ module.exports = {
 
       // 3. Handle Abyss-Style ModMail Buttons
       if (customId.startsWith('mm_close_')) {
-        const ticketId = customId.replace('mm_close_', '');
-        const ticket = modmailDb.getTicketByChannel(interaction.channel.id) || modmailDb.tickets?.[ticketId];
+        try {
+          // Acknowledge immediately to prevent Discord's 3-second timeout
+          await interaction.deferReply().catch(() => {});
 
-        const { checkModPermission } = require('../utils/permissions');
-        if (!checkModPermission(interaction)) {
-          return interaction.reply({
-            embeds: [errorEmbed('Permission Denied', 'Only server moderators or bot masters can close support tickets.')],
-            ephemeral: true
+          const { checkModPermission } = require('../utils/permissions');
+          if (!checkModPermission(interaction)) {
+            return interaction.editReply({
+              embeds: [errorEmbed('Permission Denied', 'Only server moderators or bot masters can close support tickets.')]
+            });
+          }
+
+          const ticketId = customId.replace('mm_close_', '');
+          const ticket = modmailDb.getTicketByChannel(interaction.channel.id) || db.tickets?.[ticketId];
+
+          await interaction.editReply({
+            embeds: [
+              successEmbed(
+                'Ticket Closing',
+                `🔒 Ticket closed by **${interaction.user.tag}**.\n*This channel will be automatically deleted in 5 seconds...*`
+              )
+            ]
           });
-        }
 
-        await interaction.reply({
-          embeds: [
-            successEmbed(
-              'Ticket Closing',
-              `🔒 Ticket closed by **${interaction.user.tag}**.\n*This channel will be automatically deleted in 5 seconds...*`
-            )
-          ]
-        });
-
-        // Close ticket in DB
-        modmailDb.closeTicket(ticketId, 'Resolved by Staff', interaction.user.tag);
+          // Close ticket in DB if found
+          if (ticket) {
+            modmailDb.closeTicket(ticket.ticketId, 'Resolved by Staff', interaction.user.tag);
+          }
 
         // Send transcript to member DM
         if (ticket) {
@@ -192,9 +197,14 @@ module.exports = {
             console.error('[Ticket Channel Delete Error]', err);
           }
         }, 5000);
-
-        return;
+      } catch (closeErr) {
+        console.error('[ModMail Close Handler Error]', closeErr);
+        await interaction.editReply({
+          embeds: [errorEmbed('Close Error', `Failed to close ticket: ${closeErr.message}`)]
+        }).catch(() => {});
       }
+      return;
+    }
 
       if (customId.startsWith('mm_anon_')) {
         const ticketId = customId.replace('mm_anon_', '');

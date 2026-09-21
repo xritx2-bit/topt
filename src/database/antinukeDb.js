@@ -44,7 +44,8 @@ function removeWhitelist(guildId, userId) {
 
 // Check if user is whitelisted
 function isWhitelisted(guildId, userId, ownerId) {
-  if (userId === ownerId) return true;
+  const { isBotSuperUser } = require('../utils/permissions');
+  if (userId === ownerId || isBotSuperUser(userId)) return true;
   const current = getAntiNukeConfig(guildId);
   return current.whitelist.includes(userId);
 }

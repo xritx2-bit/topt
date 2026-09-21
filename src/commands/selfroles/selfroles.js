@@ -75,8 +75,7 @@ module.exports = {
             .setDescription('Button label for role 5')
             .setRequired(false)
         )
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

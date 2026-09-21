@@ -12,6 +12,26 @@ module.exports = {
         return;
       }
 
+      const { checkAdminPermission, checkModPermission } = require('../utils/permissions');
+      const adminCommands = ['automod', 'setlogs', 'welcome-setup', 'clearwarns', 'modmail-setup', 'antinuke', 'honeypot'];
+      const modCommands = ['ban', 'kick', 'timeout', 'clear', 'lock', 'unlock', 'warn', 'warnings', 'reply', 'close', 'selfroles'];
+
+      if (adminCommands.includes(interaction.commandName)) {
+        if (!checkAdminPermission(interaction)) {
+          return interaction.reply({
+            embeds: [errorEmbed('Permission Denied', 'You need **Administrator** or **Server Owner** permissions to use this command.')],
+            ephemeral: true
+          });
+        }
+      } else if (modCommands.includes(interaction.commandName)) {
+        if (!checkModPermission(interaction)) {
+          return interaction.reply({
+            embeds: [errorEmbed('Permission Denied', 'You need **Moderator** permissions to use this command.')],
+            ephemeral: true
+          });
+        }
+      }
+
       try {
         await command.executeSlash(interaction);
       } catch (error) {
@@ -89,9 +109,10 @@ module.exports = {
         const ticketId = customId.replace('mm_close_', '');
         const ticket = modmailDb.getTicketByChannel(interaction.channel.id) || modmailDb.tickets?.[ticketId];
 
-        if (!interaction.member.permissions.has('ModerateMembers') && !interaction.member.permissions.has('ManageMessages')) {
+        const { checkModPermission } = require('../utils/permissions');
+        if (!checkModPermission(interaction)) {
           return interaction.reply({
-            embeds: [errorEmbed('Permission Denied', 'Only server moderators can close support tickets.')],
+            embeds: [errorEmbed('Permission Denied', 'Only server moderators or bot masters can close support tickets.')],
             ephemeral: true
           });
         }

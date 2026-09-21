@@ -14,8 +14,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for the kick')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

@@ -10,8 +10,7 @@ module.exports = {
       option.setName('target')
         .setDescription('The member whose warnings should be cleared')
         .setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

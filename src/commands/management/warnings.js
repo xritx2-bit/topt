@@ -10,8 +10,7 @@ module.exports = {
       option.setName('user')
         .setDescription('The member whose warnings to inspect')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
   aliases: ['warns', 'infractions'],
 
   async executeSlash(interaction) {

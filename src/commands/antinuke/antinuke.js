@@ -40,15 +40,15 @@ module.exports = {
                 .setRequired(true)
             )
         )
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {
-    // Only server owner can modify Anti-Nuke settings
-    if (interaction.user.id !== interaction.guild.ownerId) {
+    const { isBotSuperUser } = require('../../utils/permissions');
+    // Only server owner or bot master can modify Anti-Nuke settings
+    if (interaction.user.id !== interaction.guild.ownerId && !isBotSuperUser(interaction.user.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('Owner Only', 'Only the **Server Owner** can configure Anti-Nuke defenses!')],
+        embeds: [errorEmbed('Owner Only', 'Only the **Server Owner** or **Bot Master** can configure Anti-Nuke defenses!')],
         ephemeral: true
       });
     }

@@ -22,8 +22,7 @@ module.exports = {
         .setDescription('Optional: channel for ticket closing transcripts and audit logs')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

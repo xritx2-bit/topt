@@ -14,8 +14,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for the lockdown')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

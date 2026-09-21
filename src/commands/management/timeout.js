@@ -28,8 +28,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for the timeout')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
   aliases: ['mute'],
 
   async executeSlash(interaction) {

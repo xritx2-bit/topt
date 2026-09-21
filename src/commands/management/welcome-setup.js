@@ -15,8 +15,7 @@ module.exports = {
       option.setName('autorole')
         .setDescription('Optional role to automatically assign to new members')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

@@ -14,8 +14,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for the ban')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

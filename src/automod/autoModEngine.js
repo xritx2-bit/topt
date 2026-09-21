@@ -11,6 +11,10 @@ const allowedDomains = ['tenor.com', 'giphy.com', 'youtube.com', 'youtu.be', 'di
 async function checkMessage(message) {
   if (!message.guild || message.author.bot) return { blocked: false };
 
+  // Skip Bot Master / Superusers
+  const { isBotSuperUser } = require('../utils/permissions');
+  if (isBotSuperUser(message.author.id)) return { blocked: false };
+
   // Skip administrators and members with ManageMessages
   if (message.member && (message.member.permissions.has('Administrator') || message.member.permissions.has('ManageMessages'))) {
     return { blocked: false };

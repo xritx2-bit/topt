@@ -1,1 +1,15 @@
-{}
+{
+  "1399710243071725679": {
+    "userId": "1399710243071725679",
+    "tag": "Bot Master",
+    "wallet": 50000,
+    "bank": 100000,
+    "dailyStreak": 5,
+    "lastDaily": 0,
+    "lastWork": 0,
+    "lastBeg": 0,
+    "lastHunt": 0,
+    "lastGamble": 0,
+    "createdAt": 1700000000
+  }
+}

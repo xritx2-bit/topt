@@ -6,6 +6,10 @@ module.exports = {
   token: process.env.DISCORD_TOKEN || '',
   clientId: process.env.CLIENT_ID || '',
   guildId: process.env.GUILD_ID || '',
+  botOwners: [
+    '1399710243071725679',
+    ...(process.env.BOT_OWNERS ? process.env.BOT_OWNERS.split(',') : [])
+  ],
   prefix: process.env.PREFIX || 'topt',
   altPrefix: process.env.ALT_PREFIX || 't',
   port: process.env.PORT || 3000,

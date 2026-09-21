@@ -10,8 +10,7 @@ module.exports = {
       option.setName('channel')
         .setDescription('Channel where audit logs will be posted')
         .setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

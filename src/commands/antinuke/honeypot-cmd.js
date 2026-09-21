@@ -14,14 +14,14 @@ module.exports = {
             .setDescription('Existing channel to designate as honeypot (leave blank to create one)')
             .setRequired(false)
         )
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {
-    if (interaction.user.id !== interaction.guild.ownerId) {
+    const { isBotSuperUser } = require('../../utils/permissions');
+    if (interaction.user.id !== interaction.guild.ownerId && !isBotSuperUser(interaction.user.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('Owner Only', 'Only the **Server Owner** can setup the Honeypot trap!')],
+        embeds: [errorEmbed('Owner Only', 'Only the **Server Owner** or **Bot Master** can setup the Honeypot trap!')],
         ephemeral: true
       });
     }

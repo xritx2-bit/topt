@@ -78,17 +78,16 @@ async function deploySlashCommands(client) {
     }
   }
 
-  // 3. Global Registration (makes them available across all servers and DMs)
+  // 3. Clear Global Registration to eliminate duplicate (2x) slash command listing in Discord
   try {
     await rest.put(
       Routes.applicationCommands(clientId),
-      { body: commandsPayload }
+      { body: [] }
     );
     results.globalUpdated = true;
-    console.log(`🌐 [Deployer] Successfully deployed ${commandsPayload.length} slash commands globally!`);
+    console.log(`🧹 [Deployer] Cleared global command duplicates. Only instant guild commands remain active (no 2x listing!).`);
   } catch (err) {
-    console.warn(`⚠️ [Deployer] Global deployment notice: ${err.message}`);
-    results.errors.push(`Global: ${err.message}`);
+    console.warn(`⚠️ [Deployer] Global cleanup notice: ${err.message}`);
   }
 
   return {

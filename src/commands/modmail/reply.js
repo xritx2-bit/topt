@@ -15,8 +15,7 @@ module.exports = {
       option.setName('anonymous')
         .setDescription('Send as "Support Staff" without revealing your username')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
   aliases: ['r'],
 
   async executeSlash(interaction) {

@@ -46,8 +46,7 @@ module.exports = {
             .setDescription('Word or phrase to remove')
             .setRequired(true)
         )
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

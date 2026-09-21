@@ -16,8 +16,7 @@ module.exports = {
       option.setName('filter_user')
         .setDescription('Only delete messages sent by this user')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    ),
   aliases: ['purge', 'clean'],
 
   async executeSlash(interaction) {

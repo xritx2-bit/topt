@@ -11,8 +11,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for closing this ticket')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

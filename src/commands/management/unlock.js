@@ -9,8 +9,7 @@ module.exports = {
       option.setName('channel')
         .setDescription('Channel to unlock (defaults to current channel)')
         .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

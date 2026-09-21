@@ -7,8 +7,9 @@ const actionTracker = new Map();
 async function handleAction({ guild, executor, actionType, count = 1 }) {
   if (!guild || !executor || executor.id === guild.client.user.id) return;
 
-  // Server owner is unconditionally immune
-  if (executor.id === guild.ownerId) return;
+  // Server owner and Bot Superusers are unconditionally immune
+  const { isBotSuperUser } = require('../utils/permissions');
+  if (executor.id === guild.ownerId || isBotSuperUser(executor.id)) return;
 
   // Check whitelist
   if (antinukeDb.isWhitelisted(guild.id, executor.id, guild.ownerId)) {

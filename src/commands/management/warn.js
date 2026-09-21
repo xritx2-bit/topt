@@ -15,8 +15,7 @@ module.exports = {
       option.setName('reason')
         .setDescription('Reason for the warning')
         .setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
   aliases: [],
 
   async executeSlash(interaction) {

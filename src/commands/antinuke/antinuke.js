@@ -1,46 +1,48 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const antinukeDb = require('../../database/antinukeDb');
 const { infoEmbed, successEmbed, errorEmbed } = require('../../utils/embeds');
 
+const data = new SlashCommandBuilder()
+  .setName('antinuke')
+  .setDescription('Configure Anti-Nuke security defenses and whitelist trusted users')
+  .addSubcommand(sub =>
+    sub.setName('status')
+      .setDescription('View current Anti-Nuke thresholds, rules, and whitelisted staff')
+  )
+  .addSubcommand(sub =>
+    sub.setName('toggle')
+      .setDescription('Enable or disable Anti-Nuke defense')
+      .addBooleanOption(option =>
+        option.setName('enabled')
+          .setDescription('Enable or disable')
+          .setRequired(true)
+      )
+  )
+  .addSubcommandGroup(group =>
+    group.setName('whitelist')
+      .setDescription('Manage whitelisted users who bypass Anti-Nuke restrictions')
+      .addSubcommand(sub =>
+        sub.setName('add')
+          .setDescription('Add a trusted member or bot to the whitelist')
+          .addUserOption(option =>
+            option.setName('user')
+              .setDescription('User to whitelist')
+              .setRequired(true)
+          )
+      )
+      .addSubcommand(sub =>
+        sub.setName('remove')
+          .setDescription('Remove a user from the whitelist')
+          .addUserOption(option =>
+            option.setName('user')
+              .setDescription('User to remove')
+              .setRequired(true)
+          )
+      )
+  );
+
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('antinuke')
-    .setDescription('Configure Anti-Nuke security defenses and whitelist trusted users')
-    .addSubcommand(sub =>
-      sub.setName('status')
-        .setDescription('View current Anti-Nuke thresholds, rules, and whitelisted staff')
-    )
-    .addSubcommand(sub =>
-      sub.setName('toggle')
-        .setDescription('Enable or disable Anti-Nuke defense')
-        .addBooleanOption(option =>
-          option.setName('enabled')
-            .setDescription('Enable or disable')
-            .setRequired(true)
-        )
-    )
-    .addSubcommandGroup(group =>
-      group.setName('whitelist')
-        .setDescription('Manage whitelisted users who bypass Anti-Nuke restrictions')
-        .addSubcommand(sub =>
-          sub.setName('add')
-            .setDescription('Add a trusted member or bot to the whitelist')
-            .addUserOption(option =>
-              option.setName('user')
-                .setDescription('User to whitelist')
-                .setRequired(true)
-            )
-        )
-        .addSubcommand(sub =>
-          sub.setName('remove')
-            .setDescription('Remove a user from the whitelist')
-            .addUserOption(option =>
-              option.setName('user')
-                .setDescription('User to remove')
-                .setRequired(true)
-            )
-        )
-    ),
+  data,
   aliases: [],
 
   async executeSlash(interaction) {

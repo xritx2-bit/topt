@@ -1,20 +1,22 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, ChannelType } = require('discord.js');
 const antinukeDb = require('../../database/antinukeDb');
 const { successEmbed, errorEmbed } = require('../../utils/embeds');
 
+const data = new SlashCommandBuilder()
+  .setName('honeypot')
+  .setDescription('Configure a decoy Honeypot channel to automatically capture and ban raid bots')
+  .addSubcommand(sub =>
+    sub.setName('setup')
+      .setDescription('Set an existing channel or create a new decoy honeypot channel')
+      .addChannelOption(option =>
+        option.setName('channel')
+          .setDescription('Existing channel to designate as honeypot (leave blank to create one)')
+          .setRequired(false)
+      )
+  );
+
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('honeypot')
-    .setDescription('Configure a decoy Honeypot channel to automatically capture and ban raid bots')
-    .addSubcommand(sub =>
-      sub.setName('setup')
-        .setDescription('Set an existing channel or create a new decoy honeypot channel')
-        .addChannelOption(option =>
-          option.setName('channel')
-            .setDescription('Existing channel to designate as honeypot (leave blank to create one)')
-            .setRequired(false)
-        )
-    ),
+  data,
   aliases: [],
 
   async executeSlash(interaction) {

@@ -7,6 +7,13 @@ const economyDb = require('../database/economyDb');
 const automodDb = require('../database/automodDb');
 const antinukeDb = require('../database/antinukeDb');
 const { infoEmbed, successEmbed, errorEmbed } = require('../utils/embeds');
+const {
+  startKeepAlive,
+  getKeepAliveStatus,
+  sendPing,
+  resolveKeepAliveUrl,
+  formatHealthUrl
+} = require('../utils/keepAlive');
 
 // Recent system log cache for web console streaming
 const recentLogs = [
@@ -38,14 +45,24 @@ function startWebServer(client) {
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(express.json());
 
-  // Health Check for Render
+  // Health Check for Render & Uptime Monitors
   app.get('/health', (req, res) => {
+    const keepAlive = getKeepAliveStatus();
     res.status(200).json({
       status: 'ok',
       botName: config.botName || 'TOPT ENGINE',
       uptime: Math.floor(process.uptime()),
       timestamp: Date.now(),
-      botOnline: client.isReady()
+      botOnline: client.isReady(),
+      keepAlive: {
+        active: keepAlive.active,
+        targetUrl: keepAlive.targetUrl,
+        intervalMinutes: keepAlive.intervalMinutes,
+        pingCount: keepAlive.pingCount,
+        lastPingTime: keepAlive.lastPingTime,
+        lastPingStatus: keepAlive.lastPingStatus,
+        lastLatencyMs: keepAlive.lastLatencyMs
+      }
     });
   });
 
@@ -62,6 +79,8 @@ function startWebServer(client) {
     const guildId = firstGuild ? firstGuild.id : null;
     const automodConfig = guildId ? automodDb.getAutoModConfig(guildId) : config.automod;
     const antinukeConfig = guildId ? antinukeDb.getAntiNukeConfig(guildId) : config.antinuke;
+    const detectedUrl = resolveKeepAliveUrl() || (req.headers.host ? `${req.protocol}://${req.headers.host}` : null);
+    const healthUrl = formatHealthUrl(detectedUrl);
 
     res.json({
       bot: {
@@ -74,6 +93,10 @@ function startWebServer(client) {
         users: client.users ? client.users.cache.size : 0,
         memoryMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
         threatLevel: antinukeConfig.enabled ? 'SECURE' : 'CAUTION'
+      },
+      keepAlive: {
+        ...getKeepAliveStatus(),
+        healthUrl
       },
       economy: {
         totalCirculation,
@@ -156,6 +179,8 @@ function startWebServer(client) {
             '  stats             - Display economy & market metrics',
             '  tickets           - List all open ModMail tickets',
             '  threat            - Display current Anti-Nuke and Honeypot status',
+            '  keepalive         - Inspect 24/7 keep-alive pulse & uptime sentinel',
+            '  pingpulse         - Send an immediate keep-alive pulse to health URL',
             '  broadcast <msg>   - Send an announcement to server',
             '  give <user> <amt> - Credit TOPT currency to a user wallet',
             '  cls / clear       - Clear terminal output',
@@ -195,6 +220,41 @@ function startWebServer(client) {
           success: true,
           output: `[SECURITY] Anti-Nuke: ${nukeConf.enabled ? 'ACTIVE' : 'DISABLED'} | Honeypot: ${nukeConf.honeypotChannelId || 'None'} | Whitelist: ${nukeConf.whitelist?.length || 0} accounts`
         });
+
+      case 'keepalive':
+      case 'uptime':
+        const ka = getKeepAliveStatus();
+        const effectiveUrl = ka.targetUrl || formatHealthUrl(resolveKeepAliveUrl());
+        return res.json({
+          success: true,
+          output: [
+            '====================================================',
+            '💓 24/7 KEEP-ALIVE & SENTINEL PULSE DIAGNOSTICS',
+            '====================================================',
+            `  Status:          ${ka.active ? '🟢 ACTIVE (Self-Pinging)' : '🟡 STANDBY (Awaiting Public URL)'}`,
+            `  Target URL:      ${effectiveUrl || 'Not configured'}`,
+            `  Interval:        Every ${ka.intervalMinutes} minutes (< 15m Render limit)`,
+            `  Pings Delivered: ${ka.pingCount}`,
+            `  Last Status:     ${ka.lastPingStatus}`,
+            `  Last Latency:    ${ka.lastLatencyMs}ms`,
+            `  Last Pulse:      ${ka.lastPingTime ? new Date(ka.lastPingTime).toLocaleTimeString() : 'None yet'}`,
+            `  Next Pulse:      ${ka.nextPingTime ? new Date(ka.nextPingTime).toLocaleTimeString() : 'Pending'}`,
+            '----------------------------------------------------',
+            '📌 TIP: For 100% 24/7 uptime without sleep, also add',
+            `   URL: ${effectiveUrl || 'https://<your-render-app>.onrender.com/health'}`,
+            '   to free UptimeRobot (https://uptimerobot.com)',
+            '===================================================='
+          ].join('\n')
+        });
+
+      case 'pingpulse':
+        logEvent('KEEPALIVE', 'Manual sentinel pulse triggered from terminal');
+        const pRes = await sendPing();
+        if (pRes && pRes.success) {
+          return res.json({ success: true, output: `[PULSE] Success! HTTP ${pRes.status} received in ${pRes.latency}ms.` });
+        } else {
+          return res.json({ success: false, output: `[PULSE FAILED] ${pRes?.error || 'No response or no URL configured'}` });
+        }
 
       case 'ping':
         return res.json({ success: true, output: `[PONG] WebSocket Latency: ${client.ws ? Math.round(client.ws.ping) : 0}ms` });
@@ -309,8 +369,20 @@ function startWebServer(client) {
     }
   });
 
+  // Trigger immediate keep-alive pulse from dashboard
+  app.post('/api/keepalive/ping', async (req, res) => {
+    const result = await sendPing();
+    res.json({
+      success: !!(result && result.success),
+      result,
+      status: getKeepAliveStatus()
+    });
+  });
+
   const server = app.listen(PORT, () => {
     console.log(`🌐 [TOPT ENGINE] Cyber Command Center running on http://localhost:${PORT}`);
+    // Initialize 24/7 keep-alive sentinel loop
+    startKeepAlive(logEvent);
   });
 
   return server;

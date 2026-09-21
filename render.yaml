@@ -15,6 +15,8 @@ services:
         value: topt
       - key: ALT_PREFIX
         value: t
+      - key: KEEP_ALIVE_INTERVAL_MINUTES
+        value: 10
       - key: DISCORD_TOKEN
         sync: false
       - key: CLIENT_ID

@@ -119,6 +119,53 @@
         </div>
       </div>
 
+      <!-- 24/7 UPTIME GUARDIAN & SENTINEL PULSE -->
+      <div class="uptime-guardian-card">
+        <div class="guardian-header">
+          <div class="guardian-title-group">
+            <span class="pulse-indicator-dot" id="guardian-pulse-dot"></span>
+            <div>
+              <div class="guardian-title-row">
+                <span class="guardian-badge">24/7 UPTIME SENTINEL</span>
+                <span class="status-pill active" id="guardian-status-pill">SELF-PINGER ACTIVE</span>
+              </div>
+              <p class="guardian-desc">Prevents Render free tier from going to sleep after 15 minutes of inactivity</p>
+            </div>
+          </div>
+          <div class="guardian-actions">
+            <button class="cyber-btn small green" id="btn-test-pulse" onclick="triggerManualPulse()">⚡ Test Pulse</button>
+            <button class="cyber-btn small cyan" id="btn-copy-health" onclick="copyHealthUrl()">📋 Copy Health URL</button>
+          </div>
+        </div>
+
+        <div class="guardian-stats-row">
+          <div class="g-stat">
+            <span class="g-stat-label">PULSE CADENCE</span>
+            <span class="g-stat-val text-cyan" id="guardian-cadence">Every 10 mins</span>
+          </div>
+          <div class="g-stat">
+            <span class="g-stat-label">TOTAL DELIVERED</span>
+            <span class="g-stat-val text-green" id="guardian-pings">0 pulses</span>
+          </div>
+          <div class="g-stat">
+            <span class="g-stat-label">LAST STATUS</span>
+            <span class="g-stat-val" id="guardian-last-status">INITIALIZING</span>
+          </div>
+          <div class="g-stat">
+            <span class="g-stat-label">TARGET ENDPOINT</span>
+            <span class="g-stat-val text-gold mono" id="guardian-target-url">/health</span>
+          </div>
+        </div>
+
+        <div class="uptime-helper-banner">
+          <div class="helper-text">
+            <strong>💡 Fail-Safe for Guaranteed 24/7 Uptime:</strong>
+            Render occasionally restarts containers during deployments. Add your health URL (<span class="mono text-cyan" id="helper-url-preview">https://.../health</span>) to 
+            <a href="https://uptimerobot.com" target="_blank" rel="noopener noreferrer" class="link-cyan">UptimeRobot</a> (Free 5-min ping). If the bot ever stops, UptimeRobot wakes it up immediately!
+          </div>
+        </div>
+      </div>
+
       <!-- Quick Action Floating Bar -->
       <div class="quick-actions-bar">
         <span class="qa-title">⚡ QUICK DISPATCH:</span>

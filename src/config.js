@@ -9,6 +9,7 @@ module.exports = {
   prefix: process.env.PREFIX || 'topt',
   altPrefix: process.env.ALT_PREFIX || 't',
   port: process.env.PORT || 3000,
+  keepAliveUrl: process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL || '',
 
   // Anti-Nuke & Honeypot Defaults
   antinuke: {

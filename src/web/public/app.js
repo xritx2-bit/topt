@@ -75,6 +75,54 @@ async function fetchStats() {
     document.getElementById('metric-warnings').textContent = `${data.security.totalWarnings} Infractions Logged`;
     document.getElementById('metric-servers').textContent = `${data.bot.guilds} Server (${data.bot.users} Users)`;
 
+    // 24/7 Uptime Guardian & Sentinel UI Sync
+    if (data.keepAlive) {
+      const ka = data.keepAlive;
+      const effectiveUrl = ka.healthUrl || ka.targetUrl || `${window.location.origin}/health`;
+      const pill = document.getElementById('guardian-status-pill');
+      const dot = document.getElementById('guardian-pulse-dot');
+      
+      if (pill) {
+        if (ka.active) {
+          pill.className = 'status-pill active';
+          pill.textContent = 'SELF-PINGER ACTIVE';
+        } else {
+          pill.className = 'status-pill standby';
+          pill.textContent = 'STANDBY (AWAITING PUBLIC URL)';
+        }
+      }
+
+      if (dot) {
+        dot.className = ka.active ? 'pulse-indicator-dot' : 'pulse-indicator-dot standby';
+      }
+
+      const cadenceEl = document.getElementById('guardian-cadence');
+      if (cadenceEl) cadenceEl.textContent = `Every ${ka.intervalMinutes || 10} mins`;
+
+      const pingsEl = document.getElementById('guardian-pings');
+      if (pingsEl) pingsEl.textContent = `${ka.pingCount || 0} pulses`;
+
+      const statusEl = document.getElementById('guardian-last-status');
+      if (statusEl) {
+        if (ka.lastPingStatus === 'OK') {
+          statusEl.textContent = `ONLINE (${ka.lastLatencyMs}ms)`;
+          statusEl.className = 'g-stat-val text-green';
+        } else if (ka.lastPingStatus === 'ARMED') {
+          statusEl.textContent = 'ARMED (PULSING)';
+          statusEl.className = 'g-stat-val text-cyan';
+        } else {
+          statusEl.textContent = ka.lastPingStatus || 'STANDBY';
+          statusEl.className = 'g-stat-val text-gold';
+        }
+      }
+
+      const targetEl = document.getElementById('guardian-target-url');
+      if (targetEl) targetEl.textContent = effectiveUrl.replace(/^https?:\/\//, '');
+
+      const previewEl = document.getElementById('helper-url-preview');
+      if (previewEl) previewEl.textContent = effectiveUrl;
+    }
+
     // Render Leaderboards in Economy Tab & Overview
     renderLeaderboards(data.economy.topTraders);
 
@@ -516,4 +564,68 @@ function formatTimeAgo(timestamp) {
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   return `${Math.floor(diff / 3600)}h ago`;
+}
+
+// ------------------------------------------
+// 24/7 Keep-Alive & Sentinel Interactions
+// ------------------------------------------
+function getEffectiveHealthUrl() {
+  if (currentStats && currentStats.keepAlive) {
+    return currentStats.keepAlive.healthUrl || currentStats.keepAlive.targetUrl || `${window.location.origin}/health`;
+  }
+  return `${window.location.origin}/health`;
+}
+
+async function copyHealthUrl() {
+  const url = getEffectiveHealthUrl();
+  const btn = document.getElementById('btn-copy-health');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(url);
+    } else {
+      const tempInput = document.createElement('input');
+      tempInput.value = url;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+    }
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copied URL!';
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    }
+  } catch (err) {
+    console.error('Failed to copy health URL:', err);
+    alert(`Your Health URL is: ${url}`);
+  }
+}
+
+async function triggerManualPulse() {
+  const btn = document.getElementById('btn-test-pulse');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Pulsing...';
+  }
+  try {
+    const res = await fetch('/api/keepalive/ping', { method: 'POST' });
+    const data = await res.json();
+    if (btn) {
+      if (data.success) {
+        btn.innerHTML = `✅ ${data.result?.latency || 0}ms`;
+      } else {
+        btn.innerHTML = '⚠️ Failed';
+      }
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '⚡ Test Pulse';
+      }, 2500);
+    }
+    fetchStats();
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '⚡ Test Pulse';
+    }
+  }
 }

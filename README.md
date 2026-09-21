@@ -107,7 +107,21 @@ Add the following Environment Variables in the Render dashboard:
 ### Step 4: Deploy
 Click **Create Web Service**. Render will install dependencies, bind to port 10000, verify the `/health` endpoint, start your bot, and launch the Web Console at `https://your-service-name.onrender.com`!
 
-> **💡 Keeping Free Tier Awake**: Free Render web services spin down after 15 minutes of HTTP inactivity. To keep your Discord bot online 24/7 for free, create a free monitor on [UptimeRobot.com](https://uptimerobot.com) pointing to `https://your-service-name.onrender.com/health` every 5 minutes!
+### Step 5: Guarantee 24/7 Uptime (Prevent Render Sleep)
+Free Render web services spin down after **15 minutes of inactivity**. TOPT ENGINE includes a **built-in Keep-Alive Sentinel**, plus an external fail-safe:
+
+1. **Built-in Self-Pinger (Automatic)**:
+   - When deployed on Render, `RENDER_EXTERNAL_URL` is automatically detected.
+   - The bot pings its own `/health` endpoint every 10 minutes to reset Render's 15-minute inactivity timer.
+
+2. **External Fail-Safe Monitor (Guaranteed 100% 24/7)**:
+   - Render restarts containers during updates or maintenance. If the container stops, internal self-pings stop too.
+   - Go to [UptimeRobot.com](https://uptimerobot.com) (100% Free).
+   - Click **Add New Monitor** -> Monitor Type: `HTTP(s)`
+   - Friendly Name: `TOPT Discord Bot`
+   - URL: `https://your-service-name.onrender.com/health`
+   - Monitoring Interval: `5 minutes`
+   - Click **Create Monitor**. UptimeRobot will ping your service every 5 minutes from the outside, keeping your Discord bot online 24 hours a day, 7 days a week!
 
 ---
 

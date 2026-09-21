@@ -89,13 +89,27 @@ function makeRequest(path, method = 'GET', body = null) {
     console.log('✅ Web CLI Terminal passed all assertions!');
 
     // 4. Test /api/automod/toggle
-    console.log('\n▶ [4/4] Testing /api/automod/toggle...');
+    console.log('\n▶ [4/5] Testing /api/automod/toggle...');
     const toggleRes = await makeRequest('/api/automod/toggle', 'POST', { feature: 'antiSpam', enabled: true });
     assert.strictEqual(toggleRes.status, 200);
     assert.strictEqual(toggleRes.data.enabled, true);
     console.log('✅ AutoMod toggle switch passed!');
 
-    console.log('\n🎉 ALL WEB CONSOLE TESTS PASSED SUCCESSFULLY!');
+    // 5. Test 24/7 Keep-Alive Sentinel features
+    console.log('\n▶ [5/5] Testing 24/7 Keep-Alive Sentinel endpoints & terminal...');
+    assert(health.data.keepAlive !== undefined, 'Health check should contain keepAlive object');
+    assert(stats.data.keepAlive !== undefined, 'Stats should contain keepAlive object');
+
+    const termKeepAlive = await makeRequest('/api/terminal', 'POST', { command: 'keepalive' });
+    assert.strictEqual(termKeepAlive.status, 200);
+    assert(termKeepAlive.data.output.includes('24/7 KEEP-ALIVE & SENTINEL PULSE DIAGNOSTICS'));
+
+    const pingPostRes = await makeRequest('/api/keepalive/ping', 'POST');
+    assert.strictEqual(pingPostRes.status, 200);
+    assert(pingPostRes.data.status !== undefined);
+    console.log('✅ 24/7 Keep-Alive Sentinel passed all tests!');
+
+    console.log('\n🎉 ALL WEB CONSOLE & KEEP-ALIVE TESTS PASSED SUCCESSFULLY!');
     server.close();
     process.exit(0);
   } catch (err) {

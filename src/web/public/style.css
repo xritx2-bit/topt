@@ -926,3 +926,218 @@ body {
 .text-red { color: var(--neon-red); }
 .text-purple { color: var(--neon-purple); }
 .text-muted { color: var(--text-muted); }
+
+/* 24/7 Uptime Guardian & Sentinel */
+.uptime-guardian-card {
+  background: linear-gradient(135deg, rgba(13, 17, 26, 0.9), rgba(5, 255, 161, 0.04));
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(5, 255, 161, 0.25);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(5, 255, 161, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.uptime-guardian-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--neon-green), var(--neon-cyan), transparent);
+}
+
+.guardian-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.guardian-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pulse-indicator-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 14px var(--neon-green);
+  animation: pulse-ring 2s infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.pulse-indicator-dot.standby {
+  background: var(--neon-gold);
+  box-shadow: 0 0 14px var(--neon-gold);
+  animation: none;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 255, 161, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(5, 255, 161, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 255, 161, 0); }
+}
+
+.guardian-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guardian-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-main);
+}
+
+.guardian-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.status-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-pill.active {
+  background: rgba(5, 255, 161, 0.15);
+  color: var(--neon-green);
+  border: 1px solid rgba(5, 255, 161, 0.3);
+}
+
+.status-pill.standby, .status-pill.waiting {
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--neon-gold);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+
+.status-pill.failed {
+  background: rgba(255, 42, 109, 0.15);
+  color: var(--neon-red);
+  border: 1px solid rgba(255, 42, 109, 0.3);
+}
+
+.guardian-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.guardian-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.g-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.g-stat-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.g-stat-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.uptime-helper-banner {
+  background: rgba(0, 242, 254, 0.04);
+  border-left: 3px solid var(--neon-cyan);
+  padding: 0.75rem 1rem;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.78rem;
+  color: #c9d1d9;
+  line-height: 1.45;
+}
+
+.link-cyan {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.cyber-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cyber-btn:hover {
+  transform: translateY(-1px);
+}
+
+.cyber-btn.small {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+}
+
+.cyber-btn.green {
+  background: rgba(5, 255, 161, 0.12);
+  border-color: rgba(5, 255, 161, 0.4);
+  color: var(--neon-green);
+}
+
+.cyber-btn.green:hover {
+  background: rgba(5, 255, 161, 0.25);
+  box-shadow: 0 0 12px rgba(5, 255, 161, 0.3);
+}
+
+.cyber-btn.cyan {
+  background: rgba(0, 242, 254, 0.12);
+  border-color: rgba(0, 242, 254, 0.4);
+  color: var(--neon-cyan);
+}
+
+.cyber-btn.cyan:hover {
+  background: rgba(0, 242, 254, 0.25);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+}
+
+@media (max-width: 800px) {
+  .guardian-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

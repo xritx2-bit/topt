@@ -46,5 +46,6 @@ function createBalanceEmbed(user, profile, hasVip) {
       { name: '🏦 Bank Vault', value: `\`${formatCurrency(profile.bank)}\``, inline: true },
       { name: '📊 Net Worth', value: `\`${formatCurrency(total)}\``, inline: true },
       { name: '🔥 Daily Streak', value: `\`${profile.dailyStreak || 0} days\``, inline: true }
-    );
+    )
+    .setFooter({ text: '🏦 Bank funds are 100% immune to /snatch • Use /deposit & /withdraw' });
 }

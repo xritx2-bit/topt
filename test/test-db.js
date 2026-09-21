@@ -46,7 +46,43 @@ assert(dailyResult.reward >= config.economy.daily.baseAmount, 'Daily reward shou
 const dailyRetry = economyDb.claimDaily(testUser1);
 assert.strictEqual(dailyRetry.success, false, 'Consecutive daily claim must fail on cooldown');
 
-console.log('✅ Database & Economy Engine passed all assertions!');
+// Test deposit
+const preDepWallet = economyDb.getUser(testUser1).wallet;
+const preDepBank = economyDb.getUser(testUser1).bank;
+const depResult = economyDb.deposit(testUser1, 200);
+assert.strictEqual(depResult, true, 'Deposit should succeed');
+assert.strictEqual(economyDb.getUser(testUser1).wallet, preDepWallet - 200, 'Wallet should decrease by deposit amount');
+assert.strictEqual(economyDb.getUser(testUser1).bank, preDepBank + 200, 'Bank should increase by deposit amount');
+
+// Test withdraw
+const withResult = economyDb.withdraw(testUser1, 100);
+assert.strictEqual(withResult, true, 'Withdraw should succeed');
+assert.strictEqual(economyDb.getUser(testUser1).bank, preDepBank + 100, 'Bank should decrease by withdraw amount');
+assert.strictEqual(economyDb.getUser(testUser1).wallet, preDepWallet - 100, 'Wallet should increase by withdraw amount');
+
+// Test bank protection against snatching
+const protectedUser = `user_vault_protected_${Date.now()}`;
+economyDb.getUser(protectedUser);
+const u = economyDb.getUser(protectedUser);
+u.wallet = 0;
+u.bank = 5000;
+
+// Attempt snatch against a user with empty wallet but funds in bank
+const snatchBankShield = economyDb.snatch(testUser1, protectedUser);
+assert.strictEqual(snatchBankShield.success, false, 'Snatch against 0 wallet must fail');
+assert.strictEqual(snatchBankShield.reason, 'EMPTY_WALLET', 'Reason must be EMPTY_WALLET');
+assert.strictEqual(economyDb.getUser(protectedUser).bank, 5000, 'Bank Vault must remain 100% untouched!');
+
+// Test snatch with funds in wallet
+const victimUser = `user_victim_${Date.now()}`;
+economyDb.addWallet(victimUser, 1000);
+const robberUser = `user_robber_${Date.now()}`;
+const snatchResult = economyDb.snatch(robberUser, victimUser);
+assert(snatchResult.reason === 'CAUGHT' || snatchResult.success === true, 'Snatch should resolve to CAUGHT or success');
+const robberCooldown = economyDb.getCooldownRemaining(robberUser, 'snatch', config.economy.snatch.cooldown);
+assert(robberCooldown > 0, 'Snatch must set a 5-minute cooldown on robber');
+
+console.log('✅ Database & Economy Engine (including Deposit, Withdraw & Snatch) passed all assertions!');
 
 // 2. Test Trading Reputation System
 console.log('\n▶ [2/6] Testing Trading Reputation & Vouches...');

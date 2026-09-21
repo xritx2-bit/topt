@@ -31,6 +31,9 @@ function createHelpEmbed() {
         name: '🪙 TOPT Currency & OwO-Style Games',
         value: [
           `• \`${p} cash\` / \`/balance [user]\` — View wallet, bank, and net worth`,
+          `• \`${p} dep <amt|all>\` / \`/deposit\` — Deposit wallet coins into secure Bank Vault`,
+          `• \`${p} with <amt|all>\` / \`/withdraw\` — Withdraw coins from Bank Vault to wallet`,
+          `• \`${p} snatch @user [id]\` / \`/snatch\` — Snatch coins from a trader's wallet (5m cd)`,
           `• \`${p} daily\` / \`/daily\` — Claim daily dividend & build your streak`,
           `• \`${p} work\` / \`/work\` — Execute trading shifts for salary`,
           `• \`${p} beg\` / \`/beg\` — Collect spare coins from crypto whales`,

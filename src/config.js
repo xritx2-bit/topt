@@ -85,7 +85,13 @@ module.exports = {
     hunt: {
       cooldown: 60 // 1 minute
     },
-    gambleCooldown: 5 // 5 seconds between bets
+    gambleCooldown: 5, // 5 seconds between bets
+    snatch: {
+      cooldown: 300, // 5 minutes (300 seconds)
+      minPercent: 20, // Min 20% of target wallet
+      maxPercent: 50, // Max 50% of target wallet
+      successRate: 0.70 // 70% success chance
+    }
   },
 
   // OwO-style Collectibles / Assets with Rarities

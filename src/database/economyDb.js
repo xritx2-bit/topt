@@ -14,6 +14,7 @@ function getUser(userId) {
       lastBeg: 0,
       lastHunt: 0,
       lastGamble: 0,
+      lastSnatch: 0,
       createdAt: Math.floor(Date.now() / 1000)
     };
     db.save('users');
@@ -124,7 +125,8 @@ function getCooldownRemaining(userId, type, cooldownSeconds) {
     beg: user.lastBeg || 0,
     hunt: user.lastHunt || 0,
     gamble: user.lastGamble || 0,
-    daily: user.lastDaily || 0
+    daily: user.lastDaily || 0,
+    snatch: user.lastSnatch || 0
   };
 
   const lastUsed = columnMap[type] || 0;
@@ -144,7 +146,8 @@ function setCooldown(userId, type) {
     beg: 'lastBeg',
     hunt: 'lastHunt',
     gamble: 'lastGamble',
-    daily: 'lastDaily'
+    daily: 'lastDaily',
+    snatch: 'lastSnatch'
   };
 
   const key = keyMap[type];
@@ -218,6 +221,62 @@ function getLeaderboard(limit = 10) {
     .slice(0, limit);
 }
 
+// Attempt to snatch money from victim's wallet to robber's wallet
+function snatch(robberId, victimId) {
+  const robber = getUser(robberId);
+  const victim = getUser(victimId);
+
+  // Bank balance is completely untouchable!
+  const victimWallet = victim.wallet || 0;
+  if (victimWallet <= 0) {
+    return {
+      success: false,
+      reason: 'EMPTY_WALLET',
+      victimBank: victim.bank || 0
+    };
+  }
+
+  const snatchConfig = (config.economy && config.economy.snatch) || {
+    minPercent: 20,
+    maxPercent: 50,
+    successRate: 0.70
+  };
+
+  const isSuccess = Math.random() < (snatchConfig.successRate !== undefined ? snatchConfig.successRate : 0.70);
+
+  if (!isSuccess) {
+    setCooldown(robberId, 'snatch');
+    return {
+      success: false,
+      reason: 'CAUGHT',
+      stolenAmount: 0,
+      victimBank: victim.bank || 0
+    };
+  }
+
+  // Calculate stolen amount: random percent between minPercent and maxPercent
+  const minP = snatchConfig.minPercent || 20;
+  const maxP = snatchConfig.maxPercent || 50;
+  const percent = (Math.floor(Math.random() * (maxP - minP + 1)) + minP) / 100;
+
+  // If victim has 100 or less, steal all of it, otherwise percentage
+  let stolen = victimWallet <= 100 ? victimWallet : Math.max(1, Math.floor(victimWallet * percent));
+  stolen = Math.min(stolen, victimWallet);
+
+  victim.wallet -= stolen;
+  robber.wallet += stolen;
+  setCooldown(robberId, 'snatch');
+  db.save('users');
+
+  return {
+    success: true,
+    stolenAmount: stolen,
+    robberWallet: robber.wallet,
+    victimWallet: victim.wallet,
+    victimBank: victim.bank || 0
+  };
+}
+
 module.exports = {
   getUser,
   addWallet,
@@ -228,6 +287,7 @@ module.exports = {
   claimDaily,
   getCooldownRemaining,
   setCooldown,
+  snatch,
   addItem,
   removeItem,
   hasItem,

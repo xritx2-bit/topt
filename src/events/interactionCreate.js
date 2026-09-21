@@ -1,5 +1,7 @@
 const selfRoleDb = require('../database/selfRoleDb');
-const { errorEmbed, successEmbed } = require('../utils/embeds');
+const modmailDb = require('../database/modmailDb');
+const db = require('../database/db');
+const { errorEmbed, successEmbed, infoEmbed } = require('../utils/embeds');
 
 module.exports = {
   name: 'interactionCreate',

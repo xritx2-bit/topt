@@ -45,6 +45,23 @@ function startWebServer(client) {
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(express.json());
 
+  // Resiliency fallback: if an uptime monitor accidentally requests a nested or duplicated URL (e.g. /https://...)
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/http:') || req.path.startsWith('/https:') || req.path.includes('onrender.com')) {
+      const keepAlive = getKeepAliveStatus();
+      return res.status(200).json({
+        status: 'ok',
+        note: 'Fallback health response for malformed or duplicated URL',
+        botName: config.botName || 'TOPT ENGINE',
+        uptime: Math.floor(process.uptime()),
+        timestamp: Date.now(),
+        botOnline: client.isReady(),
+        keepAlive
+      });
+    }
+    next();
+  });
+
   // Health Check for Render & Uptime Monitors
   app.get('/health', (req, res) => {
     const keepAlive = getKeepAliveStatus();
